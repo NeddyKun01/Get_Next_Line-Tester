@@ -7,17 +7,23 @@ This guide explains how to add or change test coverage.
 The tester uses a compact generated-harness model:
 
 ```text
+tester/include/gnl_tester.hpp
 tester/src/main.cpp
+tester/tests/mandatory_harness.c
+tester/tests/bonus_harness.c
 ```
 
-At runtime, the C++ driver writes a temporary `harness.c`, compiles it with the
-target `get_next_line` files, and runs the resulting executable for each
-selected `BUFFER_SIZE`.
+At runtime, the C++ driver selects the mandatory or bonus C harness from
+`tester/tests/`, compiles it with the target `get_next_line` files, and runs the
+resulting executable for each selected `BUFFER_SIZE`.
 
 ## Adding Mandatory Cases
 
-Mandatory cases live in the non-bonus branch of `harness_source()` in
-`tester/src/main.cpp`.
+Mandatory cases live in:
+
+```text
+tester/tests/mandatory_harness.c
+```
 
 Good new cases should include:
 
@@ -28,7 +34,11 @@ Good new cases should include:
 
 ## Adding Bonus Cases
 
-Bonus cases live in the bonus branch of `harness_source()`.
+Bonus cases live in:
+
+```text
+tester/tests/bonus_harness.c
+```
 
 Prefer interleaved reads that prove independent fd state:
 

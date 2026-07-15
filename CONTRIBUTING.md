@@ -42,9 +42,11 @@ If your change touches allocation or fd cleanup behavior, also run:
 
 ## Adding Tests
 
-The current tester generates a temporary C harness from
-`tester/src/main.cpp`, compiles it against the target source files, and runs it
-once per selected `BUFFER_SIZE`.
+The current tester compiles a C harness from `tester/tests/` against the target
+source files, and runs it once per selected `BUFFER_SIZE`.
+
+The driver code lives in `tester/src/`. Shared declarations live in
+`tester/include/`.
 
 When adding coverage, prefer cases that prove different behavior:
 

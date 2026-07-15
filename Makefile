@@ -9,10 +9,12 @@ ARGS=
 
 NAME=gnl_tester
 SRC_DIR=tester/src
+INC_DIR=tester/include
 BUILD_DIR=tester/build
 
-SRCS=$(SRC_DIR)/main.cpp
-OBJS=$(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+SRCS=$(wildcard $(SRC_DIR)/*.cpp)
+OBJS=$(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/src_%.o)
+HEADERS=$(INC_DIR)/gnl_tester.hpp
 
 all: build
 	@./$(NAME) --root "$(ROOT_DIR)" $(ARGS)
@@ -24,8 +26,8 @@ build: $(NAME)
 $(BUILD_DIR):
 	@mkdir -p $@
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+$(BUILD_DIR)/src_%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BUILD_DIR)
+	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
 
 $(NAME): $(OBJS)
 	@$(CXX) $(CXXFLAGS) $^ -o $@
