@@ -9,13 +9,16 @@ The tester uses a compact generated-harness model:
 ```text
 tester/include/gnl_tester.hpp
 tester/src/main.cpp
+tester/tests/harness_utils.h
+tester/tests/harness_utils.c
 tester/tests/mandatory_harness.c
 tester/tests/bonus_harness.c
 ```
 
 At runtime, the C++ driver selects the mandatory or bonus C harness from
-`tester/tests/`, compiles it with the target `get_next_line` files, and runs the
-resulting executable for each selected `BUFFER_SIZE`.
+`tester/tests/`, compiles it with the shared harness utilities and the target
+`get_next_line` files, and runs the resulting executable for each selected
+`BUFFER_SIZE`.
 
 ## Adding Mandatory Cases
 
@@ -50,6 +53,18 @@ fd B -> second line
 ```
 
 Add EOF checks for each fd separately.
+
+## Shared Harness Helpers
+
+Common helper functions live in:
+
+```text
+tester/tests/harness_utils.c
+tester/tests/harness_utils.h
+```
+
+Use those helpers for fixture creation, path joining, line comparison, and
+shared failure counting. Keep individual harness files focused on test cases.
 
 ## Guidelines
 

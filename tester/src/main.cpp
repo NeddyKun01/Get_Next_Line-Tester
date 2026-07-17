@@ -147,14 +147,22 @@ static fs::path harness_path(const fs::path &tester_dir, bool bonus)
 	return (tester_dir / "tester" / "tests" / "mandatory_harness.c");
 }
 
+static fs::path harness_utils_path(const fs::path &tester_dir)
+{
+	return (tester_dir / "tester" / "tests" / "harness_utils.c");
+}
+
 static std::string compile_command(const Config &cfg, const fs::path &harness,
-	const fs::path &exe, int buffer)
+	const fs::path &utils, const fs::path &exe, int buffer)
 {
 	std::ostringstream cmd;
+	fs::path tests_dir = harness.parent_path();
 
 	cmd << "cc -Wall -Wextra -Werror -D BUFFER_SIZE=" << buffer
-		<< " -I " << quote(cfg.root.string()) << " "
-		<< quote(harness.string()) << " ";
+		<< " -I " << quote(cfg.root.string())
+		<< " -I " << quote(tests_dir.string()) << " "
+		<< quote(harness.string()) << " "
+		<< quote(utils.string()) << " ";
 	if (cfg.bonus)
 		cmd << quote((cfg.root / "get_next_line_bonus.c").string()) << " "
 			<< quote((cfg.root / "get_next_line_utils_bonus.c").string()) << " ";
@@ -172,7 +180,7 @@ static bool command_exists(const std::string &name)
 }
 
 static RunResult run_one(const Config &cfg, const fs::path &build,
-	const fs::path &harness, int buffer)
+	const fs::path &harness, const fs::path &utils, int buffer)
 {
 	RunResult res;
 	fs::path run_dir = build / ("buffer_" + std::to_string(buffer)
@@ -185,7 +193,7 @@ static RunResult run_one(const Config &cfg, const fs::path &build,
 
 	res.buffer = buffer;
 	fs::create_directories(run_dir);
-	code = run_command(compile_command(cfg, harness, exe, buffer), compile_log);
+	code = run_command(compile_command(cfg, harness, utils, exe, buffer), compile_log);
 	res.compile_output = read_file(compile_log);
 	res.compile_ok = (code == 0);
 	if (!res.compile_ok)
@@ -236,6 +244,7 @@ int main(int argc, char **argv)
 	fs::path tester_dir = executable_dir(argv[0]);
 	fs::path build = tester_dir / "tester" / "build" / "runs";
 	fs::path harness;
+	fs::path harness_utils;
 	int passed = 0;
 
 	if (cfg.help)
@@ -247,9 +256,15 @@ int main(int argc, char **argv)
 	if (!validate_root(cfg))
 		return (2);
 	harness = harness_path(tester_dir, cfg.bonus);
+	harness_utils = harness_utils_path(tester_dir);
 	if (!fs::exists(harness))
 	{
 		std::cerr << "Missing " << harness << "\n";
+		return (2);
+	}
+	if (!fs::exists(harness_utils))
+	{
+		std::cerr << "Missing " << harness_utils << "\n";
 		return (2);
 	}
 	fs::create_directories(build);
@@ -258,7 +273,7 @@ int main(int argc, char **argv)
 	std::cout << "mode:   " << (cfg.bonus ? "bonus" : "mandatory") << "\n\n";
 	for (int buffer : cfg.buffers)
 	{
-		RunResult res = run_one(cfg, build, harness, buffer);
+		RunResult res = run_one(cfg, build, harness, harness_utils, buffer);
 		if (res.compile_ok && res.tests_ok && res.leaks_ok)
 			passed++;
 		print_result(cfg, res);
