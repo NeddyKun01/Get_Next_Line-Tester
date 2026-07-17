@@ -1,6 +1,7 @@
-# Release Notes v0.2.0
+# Get Next Line Tester v0.2.0
 
-Draft release notes for the next version of Get Next Line Tester.
+This release focuses on repository organization, reviewer-friendly workflows,
+and stronger mandatory and bonus coverage.
 
 ## Highlights
 
@@ -22,7 +23,7 @@ make re
 ./gnl_tester --root /path/to/Get_Next_Line --review --no-color
 ```
 
-## Release Status
+## Validation
 
-This release is not tagged yet. Keep this file aligned with `CHANGELOG.md`
-until `v0.2.0` is published.
+This release was validated locally with mandatory strict mode, bonus strict
+mode, and review mode against a known-good Get Next Line target.

@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.2.0 - 2026-07-17
+
 - Reorganized the tester source layout with shared declarations in
   `tester/include/` and harness definitions in `tester/tests/`.
 - Added shared C harness utilities so mandatory and bonus tests do not duplicate
@@ -15,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Added mandatory pipe fd coverage.
 - Added bonus round-robin coverage across eight file descriptors.
 - Added a release plan document for the next published version.
-- Added draft release notes for `v0.2.0`.
+- Added release notes for `v0.2.0`.
 
 ## 0.1.0 - 2026-07-15
 
