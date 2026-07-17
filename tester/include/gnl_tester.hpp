@@ -11,6 +11,7 @@ struct Config
 {
 	fs::path root = "..";
 	std::vector<int> buffers = {1, 2, 3, 5, 8, 16, 32, 42, 128, 1024};
+	int timeout_ms = 3000;
 	bool bonus = false;
 	bool leaks = false;
 	bool color = true;
@@ -23,6 +24,7 @@ struct RunResult
 	bool compile_ok = false;
 	bool tests_ok = false;
 	bool leaks_ok = true;
+	bool timed_out = false;
 	std::string compile_output;
 	std::string test_output;
 	std::string leak_output;

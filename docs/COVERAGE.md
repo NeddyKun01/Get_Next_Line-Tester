@@ -25,6 +25,7 @@ Covered cases:
 | long line | Lines larger than common buffer sizes are joined correctly. |
 | exact-ish boundary fixture | Buffer edge behavior does not drop or duplicate bytes. |
 | calls after EOF | Repeated calls after EOF keep returning `NULL`. |
+| timeout | Stuck test runs are killed after the configured timeout. |
 
 ## Bonus Mode
 
@@ -61,7 +62,6 @@ The tester can run every case across multiple `BUFFER_SIZE` values:
 
 Planned future coverage:
 
-- timeout handling for infinite loops;
 - very large fixtures such as 100k or 1MB lines;
 - pipe or stdin based reads;
 - broader bonus stress tests with many fds;

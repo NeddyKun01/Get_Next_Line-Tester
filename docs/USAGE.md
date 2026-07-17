@@ -53,6 +53,7 @@ Then run the binary:
 ./gnl_tester --root ../Get_Next_Line --strict
 ./gnl_tester --root ../Get_Next_Line --bonus --strict
 ./gnl_tester --root ../Get_Next_Line --buffer 1,2,42,1024
+./gnl_tester --root ../Get_Next_Line --strict --timeout 5000
 ./gnl_tester --root ../Get_Next_Line --strict --leaks --no-color
 ./gnl_tester --help
 ```
@@ -74,6 +75,19 @@ cc -Wall -Wextra -Werror -D BUFFER_SIZE=N
 
 This catches bugs that only appear with tiny buffers, larger buffers, or exact
 boundary lengths.
+
+## Timeout
+
+Each compiled test run is killed if it exceeds the configured timeout. The
+default is `3000` milliseconds.
+
+Use a larger timeout for slow machines or heavy Valgrind runs:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --strict --timeout 5000
+```
+
+Use `--timeout 0` to disable the timeout.
 
 ## Bonus Mode
 

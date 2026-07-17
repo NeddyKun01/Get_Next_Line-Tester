@@ -1,12 +1,17 @@
 #include "gnl_tester.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <csignal>
 #include <cstdlib>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <sys/wait.h>
+#include <thread>
+#include <unistd.h>
 
 static fs::path executable_dir(const char *argv0)
 {
@@ -44,6 +49,66 @@ static int run_command(const std::string &cmd, const fs::path &log)
 	return (128);
 }
 
+static int run_command_timeout(const std::vector<std::string> &args,
+	const fs::path &log, int timeout_ms, bool &timed_out)
+{
+	std::vector<char *> argv;
+	auto start = std::chrono::steady_clock::now();
+	pid_t pid;
+	int fd;
+	int status;
+
+	timed_out = false;
+	fd = open(log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (fd < 0)
+		return (127);
+	pid = fork();
+	if (pid < 0)
+	{
+		close(fd);
+		return (127);
+	}
+	if (pid == 0)
+	{
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+		close(fd);
+		for (const std::string &arg : args)
+			argv.push_back(const_cast<char *>(arg.c_str()));
+		argv.push_back(NULL);
+		execvp(argv[0], argv.data());
+		_exit(127);
+	}
+	close(fd);
+	while (true)
+	{
+		pid_t done = waitpid(pid, &status, WNOHANG);
+		if (done == pid)
+		{
+			if (WIFEXITED(status))
+				return (WEXITSTATUS(status));
+			if (WIFSIGNALED(status))
+				return (128 + WTERMSIG(status));
+			return (128);
+		}
+		if (done < 0)
+			return (127);
+		if (timeout_ms > 0)
+		{
+			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now() - start).count();
+			if (elapsed >= timeout_ms)
+			{
+				timed_out = true;
+				kill(pid, SIGKILL);
+				waitpid(pid, &status, 0);
+				return (124);
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+}
+
 static std::vector<int> parse_buffers(const std::string &text)
 {
 	std::vector<int> values;
@@ -73,6 +138,7 @@ static void print_help(void)
 		<< "  --quick          use BUFFER_SIZE=1,42\n"
 		<< "  --strict         use a wider BUFFER_SIZE matrix\n"
 		<< "  --leaks          run each suite with valgrind when available\n"
+		<< "  --timeout MS     kill a test run after this many ms (default: 3000)\n"
 		<< "  --no-color       disable colors\n"
 		<< "  --help           show this help\n";
 }
@@ -98,6 +164,10 @@ static Config parse_args(int argc, char **argv)
 			cfg.buffers = {1, 42};
 		else if (arg == "--strict")
 			cfg.buffers = {1, 2, 3, 4, 5, 7, 8, 16, 32, 42, 64, 128, 1024};
+		else if (arg == "--timeout" && i + 1 < argc)
+			cfg.timeout_ms = std::max(0, std::atoi(argv[++i]));
+		else if (arg.rfind("--timeout=", 0) == 0)
+			cfg.timeout_ms = std::max(0, std::atoi(arg.substr(10).c_str()));
 		else if (arg == "--buffer" && i + 1 < argc)
 			cfg.buffers = parse_buffers(argv[++i]);
 		else if (arg.rfind("--buffer=", 0) == 0)
@@ -198,17 +268,22 @@ static RunResult run_one(const Config &cfg, const fs::path &build,
 	res.compile_ok = (code == 0);
 	if (!res.compile_ok)
 		return (res);
-	code = run_command(quote(exe.string()) + " " + quote(run_dir.string()), test_log);
+	code = run_command_timeout({exe.string(), run_dir.string()}, test_log,
+		cfg.timeout_ms, res.timed_out);
 	res.test_output = read_file(test_log);
-	res.tests_ok = (code == 0);
+	res.tests_ok = (code == 0 && !res.timed_out);
 	if (cfg.leaks && command_exists("valgrind"))
 	{
-		std::string cmd = "valgrind --leak-check=full --errors-for-leak-kinds=all "
-			"--error-exitcode=42 " + quote(exe.string()) + " "
-			+ quote(run_dir.string());
-		code = run_command(cmd, leak_log);
+		code = run_command_timeout({
+			"valgrind",
+			"--leak-check=full",
+			"--errors-for-leak-kinds=all",
+			"--error-exitcode=42",
+			exe.string(),
+			run_dir.string()
+		}, leak_log, cfg.timeout_ms, res.timed_out);
 		res.leak_output = read_file(leak_log);
-		res.leaks_ok = (code == 0);
+		res.leaks_ok = (code == 0 && !res.timed_out);
 	}
 	return (res);
 }
@@ -229,9 +304,13 @@ static void print_result(const Config &cfg, const RunResult &res)
 		<< " BUFFER_SIZE=" << res.buffer;
 	if (cfg.bonus)
 		std::cout << " bonus";
+	if (res.timed_out)
+		std::cout << " timeout(" << cfg.timeout_ms << "ms)";
 	std::cout << "\n";
 	if (!res.compile_ok)
 		std::cout << res.compile_output;
+	else if (res.timed_out)
+		std::cout << "Test run exceeded " << cfg.timeout_ms << "ms.\n";
 	else if (!res.tests_ok)
 		std::cout << res.test_output;
 	else if (!res.leaks_ok)

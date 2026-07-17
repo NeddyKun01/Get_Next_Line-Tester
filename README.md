@@ -45,6 +45,7 @@ Example with an absolute target path:
 --quick             BUFFER_SIZE=1,42
 --strict            BUFFER_SIZE=1,2,3,4,5,7,8,16,32,42,64,128,1024
 --leaks             run each suite with Valgrind when available
+--timeout MS        kill a test run after this many ms (default: 3000)
 --no-color          disable colors
 --help              show help
 ```
@@ -60,6 +61,7 @@ Example with an absolute target path:
 - lines larger than `BUFFER_SIZE`;
 - buffer boundary cases;
 - repeated calls after EOF;
+- test runs that exceed the configured timeout;
 - bonus mode with two interleaved file descriptors.
 
 The tester compiles the target project once per `BUFFER_SIZE` with:

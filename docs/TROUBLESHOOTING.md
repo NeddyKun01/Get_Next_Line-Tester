@@ -55,6 +55,24 @@ Common causes:
 - bytes are duplicated or skipped across buffer boundaries;
 - empty lines are treated as EOF.
 
+## Timeout Failures
+
+If a run prints `timeout(3000ms)` or another configured value, the compiled test
+case did not finish before the limit.
+
+Common causes:
+
+- infinite loops while reading until newline;
+- not advancing or clearing the stash after EOF;
+- retrying `read` forever after it returns `0` or `-1`;
+- extremely slow string joining on long lines.
+
+To confirm whether the issue is just a slow machine, raise the timeout:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --strict --timeout 5000
+```
+
 ## Bonus Failures
 
 If mandatory passes but bonus fails, check that the bonus implementation keeps

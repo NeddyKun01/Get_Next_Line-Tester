@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
   `tester/include/` and harness definitions in `tester/tests/`.
 - Added shared C harness utilities so mandatory and bonus tests do not duplicate
   fixture and assertion helpers.
-- Planned: timeout-protected test execution.
+- Added `--timeout MS` to kill stuck test runs.
 - Planned: larger stress fixtures for very long lines.
 - Planned: reviewer-oriented summary mode.
 - Planned: clearer Valgrind leak classification.
