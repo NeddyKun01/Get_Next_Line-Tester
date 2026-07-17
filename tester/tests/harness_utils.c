@@ -34,14 +34,90 @@ char	*join_path(const char *dir, const char *name)
 	return (path);
 }
 
+char	*repeat_char(char value, size_t count)
+{
+	char	*text;
+	size_t	i;
+
+	text = malloc(count + 1);
+	if (!text)
+		exit(2);
+	i = 0;
+	while (i < count)
+		text[i++] = value;
+	text[count] = '\0';
+	return (text);
+}
+
+char	*join2(const char *a, const char *b)
+{
+	size_t	a_len;
+	size_t	b_len;
+	char	*text;
+
+	a_len = strlen(a);
+	b_len = strlen(b);
+	text = malloc(a_len + b_len + 1);
+	if (!text)
+		exit(2);
+	memcpy(text, a, a_len);
+	memcpy(text + a_len, b, b_len);
+	text[a_len + b_len] = '\0';
+	return (text);
+}
+
+char	*join3(const char *a, const char *b, const char *c)
+{
+	char	*left;
+	char	*text;
+
+	left = join2(a, b);
+	text = join2(left, c);
+	free(left);
+	return (text);
+}
+
+static void	print_value(const char *label, const char *value)
+{
+	size_t	len;
+	size_t	i;
+	size_t	limit;
+
+	if (!value)
+	{
+		printf("%s=(null)", label);
+		return ;
+	}
+	len = strlen(value);
+	limit = len < 60 ? len : 60;
+	printf("%s(len=%zu)=\"", label, len);
+	i = 0;
+	while (i < limit)
+	{
+		if (value[i] == '\n')
+			printf("\\n");
+		else if (value[i] == '\t')
+			printf("\\t");
+		else
+			putchar(value[i]);
+		i++;
+	}
+	if (len > limit)
+		printf("...");
+	printf("\"");
+}
+
 void	check_line(const char *label, char *got, const char *expected)
 {
 	if ((got == NULL && expected != NULL)
 		|| (got != NULL && expected == NULL)
 		|| (got != NULL && strcmp(got, expected) != 0))
 	{
-		printf("NOK %s expected=%s got=%s\n", label,
-			expected ? expected : "(null)", got ? got : "(null)");
+		printf("NOK %s ", label);
+		print_value("expected", expected);
+		printf(" ");
+		print_value("got", got);
+		printf("\n");
 		g_failures++;
 	}
 	free(got);

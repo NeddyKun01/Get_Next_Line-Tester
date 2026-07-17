@@ -14,6 +14,7 @@ struct Config
 	int timeout_ms = 3000;
 	bool bonus = false;
 	bool review = false;
+	bool stress = false;
 	bool leaks = false;
 	bool color = true;
 	bool help = false;

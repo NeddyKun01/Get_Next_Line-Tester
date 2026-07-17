@@ -34,6 +34,41 @@ static void	check_file(const char *dir, const char *name,
 	free(path);
 }
 
+#ifdef GNL_STRESS
+static void	check_stress_files(const char *dir)
+{
+	char	*line_10k;
+	char	*line_10k_nl;
+	char	*content_10k;
+	char	*line_100k;
+	char	*content_100k_tail;
+	char	*line_100k_nl;
+	const char	*expected_10k[] = {NULL, "tail", NULL};
+	const char	*expected_100k[] = {NULL, NULL};
+	const char	*expected_100k_tail[] = {NULL, "z", NULL};
+
+	line_10k = repeat_char('x', 10000);
+	line_10k_nl = join2(line_10k, "\n");
+	content_10k = join3(line_10k, "\n", "tail");
+	expected_10k[0] = line_10k_nl;
+	check_file(dir, "stress_10k_newline_tail.txt", content_10k, expected_10k);
+	free(line_10k);
+	free(line_10k_nl);
+	free(content_10k);
+	line_100k = repeat_char('y', 100000);
+	expected_100k[0] = line_100k;
+	check_file(dir, "stress_100k_no_newline.txt", line_100k, expected_100k);
+	content_100k_tail = join3(line_100k, "\n", "z");
+	line_100k_nl = join2(line_100k, "\n");
+	expected_100k_tail[0] = line_100k_nl;
+	check_file(dir, "stress_100k_newline_tail.txt", content_100k_tail,
+		expected_100k_tail);
+	free(line_100k);
+	free(content_100k_tail);
+	free(line_100k_nl);
+}
+#endif
+
 int	main(int argc, char **argv)
 {
 	static const char	*empty[] = {NULL};
@@ -61,6 +96,9 @@ int	main(int argc, char **argv)
 		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
 		"tail",
 		long_expected);
+#ifdef GNL_STRESS
+	check_stress_files(argv[1]);
+#endif
 	if (g_failures == 0)
 		printf("OK mandatory cases\n");
 	return (g_failures ? 1 : 0);

@@ -73,6 +73,14 @@ To confirm whether the issue is just a slow machine, raise the timeout:
 ./gnl_tester --root ../Get_Next_Line --strict --timeout 5000
 ```
 
+Stress mode intentionally adds large 10k and 100k line fixtures. If stress mode
+times out with tiny buffers such as `BUFFER_SIZE=1`, retry with a larger timeout
+or a focused buffer first:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --stress --buffer 42 --timeout 10000
+```
+
 ## Bonus Failures
 
 If mandatory passes but bonus fails, check that the bonus implementation keeps

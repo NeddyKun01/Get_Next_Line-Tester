@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
   fixture and assertion helpers.
 - Added `--timeout MS` to kill stuck test runs.
 - Added `--review` for compact mandatory and bonus pre-submission summaries.
-- Planned: larger stress fixtures for very long lines.
+- Added `--stress` for opt-in 10k and 100k mandatory line fixtures.
 - Planned: clearer Valgrind leak classification.
 
 ## 0.1.0 - 2026-07-15

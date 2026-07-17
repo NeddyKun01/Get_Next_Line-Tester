@@ -27,6 +27,16 @@ Covered cases:
 | calls after EOF | Repeated calls after EOF keep returning `NULL`. |
 | timeout | Stuck test runs are killed after the configured timeout. |
 
+## Stress Mode
+
+Stress mode is enabled with `--stress`.
+
+| Case | What it checks |
+| --- | --- |
+| 10k line with newline and tail | Large line extraction, stash handoff, and following short line. |
+| 100k line without final newline | Large EOF line handling without requiring `\n`. |
+| 100k line with newline and tail | Large line cleanup before returning the next short line. |
+
 ## Bonus Mode
 
 Bonus mode compiles:
@@ -67,7 +77,7 @@ strict bonus matrix. It reports a compact suite score and a final verdict.
 
 Planned future coverage:
 
-- very large fixtures such as 100k or 1MB lines;
+- 1MB line fixtures;
 - pipe or stdin based reads;
 - broader bonus stress tests with many fds;
 - clearer categorization of Valgrind failures.

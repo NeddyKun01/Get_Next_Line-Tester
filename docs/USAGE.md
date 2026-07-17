@@ -53,6 +53,7 @@ Then run the binary:
 ./gnl_tester --root ../Get_Next_Line --strict
 ./gnl_tester --root ../Get_Next_Line --bonus --strict
 ./gnl_tester --root ../Get_Next_Line --review
+./gnl_tester --root ../Get_Next_Line --stress --buffer 42 --timeout 10000
 ./gnl_tester --root ../Get_Next_Line --buffer 1,2,42,1024
 ./gnl_tester --root ../Get_Next_Line --strict --timeout 5000
 ./gnl_tester --root ../Get_Next_Line --strict --leaks --no-color
@@ -90,6 +91,18 @@ Use a larger timeout for slow machines or heavy Valgrind runs:
 
 Use `--timeout 0` to disable the timeout.
 
+## Stress Mode
+
+Use `--stress` to enable large-line fixtures. Stress mode currently adds 10k
+and 100k line cases to mandatory tests.
+
+```sh
+./gnl_tester --root ../Get_Next_Line --stress --buffer 42 --timeout 10000
+```
+
+Stress mode can be intentionally heavy with very small buffers. If you combine
+`--stress` with `BUFFER_SIZE=1`, consider raising `--timeout`.
+
 ## Review Mode
 
 Use `--review` for a compact pre-submission check:
@@ -106,6 +119,13 @@ Use `--leaks` with review mode when you also want Valgrind checks:
 
 ```sh
 ./gnl_tester --root ../Get_Next_Line --review --leaks
+```
+
+Use `--stress` with review mode only when you want the heavier large-line cases
+included in the mandatory matrix:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --review --stress --timeout 10000
 ```
 
 ## Bonus Mode

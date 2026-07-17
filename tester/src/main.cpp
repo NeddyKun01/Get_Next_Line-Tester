@@ -135,6 +135,7 @@ static void print_help(void)
 		<< "  --root PATH       target project root (default: ..)\n"
 		<< "  --bonus          test get_next_line_bonus files\n"
 		<< "  --review         run mandatory strict and bonus strict when available\n"
+		<< "  --stress         enable large-line stress fixtures\n"
 		<< "  --buffer LIST    comma-separated BUFFER_SIZE values\n"
 		<< "  --quick          use BUFFER_SIZE=1,42\n"
 		<< "  --strict         use a wider BUFFER_SIZE matrix\n"
@@ -159,6 +160,8 @@ static Config parse_args(int argc, char **argv)
 			cfg.bonus = true;
 		else if (arg == "--review")
 			cfg.review = true;
+		else if (arg == "--stress")
+			cfg.stress = true;
 		else if (arg == "--leaks")
 			cfg.leaks = true;
 		else if (arg == "--no-color")
@@ -243,6 +246,8 @@ static std::string compile_command(const Config &cfg, const fs::path &harness,
 		<< " -I " << quote(tests_dir.string()) << " "
 		<< quote(harness.string()) << " "
 		<< quote(utils.string()) << " ";
+	if (cfg.stress)
+		cmd << " -D GNL_STRESS=1 ";
 	if (cfg.bonus)
 		cmd << quote((cfg.root / "get_next_line_bonus.c").string()) << " "
 			<< quote((cfg.root / "get_next_line_utils_bonus.c").string()) << " ";
@@ -396,6 +401,7 @@ static int run_review(Config cfg, const fs::path &tester_dir)
 	std::cout << "Get Next Line Tester Review\n\n";
 	std::cout << "target:  " << cfg.root << "\n";
 	std::cout << "timeout: " << cfg.timeout_ms << "ms\n";
+	std::cout << "stress:  " << (cfg.stress ? "enabled" : "skipped") << "\n";
 	std::cout << "leaks:   " << (cfg.leaks ? "enabled" : "skipped") << "\n\n";
 	mandatory = run_suite(cfg, tester_dir, build, false, false);
 	if (bonus_available)

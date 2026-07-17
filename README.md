@@ -4,7 +4,7 @@ Standalone tester for 42-style `get_next_line` projects.
 
 It provides a small command-line driver, `--root` based target selection,
 multiple `BUFFER_SIZE` profiles, mandatory checks, bonus checks, review
-summaries, and optional Valgrind leak checks.
+summaries, optional stress fixtures, and optional Valgrind leak checks.
 
 ## Documentation
 
@@ -42,6 +42,7 @@ Example with an absolute target path:
 --root PATH          target get_next_line project directory (default: ..)
 --bonus             use get_next_line_bonus.c/.h and test interleaved fds
 --review            run mandatory strict and bonus strict when available
+--stress            enable large-line stress fixtures
 --buffer LIST       comma-separated BUFFER_SIZE list
 --quick             BUFFER_SIZE=1,42
 --strict            BUFFER_SIZE=1,2,3,4,5,7,8,16,32,42,64,128,1024
@@ -60,6 +61,7 @@ Example with an absolute target path:
 - multiple lines;
 - consecutive empty lines;
 - lines larger than `BUFFER_SIZE`;
+- opt-in 10k and 100k line stress fixtures;
 - buffer boundary cases;
 - repeated calls after EOF;
 - test runs that exceed the configured timeout;
