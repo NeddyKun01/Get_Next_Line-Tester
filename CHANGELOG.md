@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - Added Valgrind failure classification for leaks and common memory errors.
 - Added mandatory pipe fd coverage.
 - Added bonus round-robin coverage across eight file descriptors.
+- Added a release plan document for the next published version.
+- Added draft release notes for `v0.2.0`.
 
 ## 0.1.0 - 2026-07-15
 

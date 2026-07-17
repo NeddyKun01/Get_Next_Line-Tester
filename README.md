@@ -14,6 +14,9 @@ summaries, optional stress fixtures, and optional Valgrind leak checks.
 | [`docs/USAGE.md`](docs/USAGE.md) | Command and workflow guide. |
 | [`docs/COVERAGE.md`](docs/COVERAGE.md) | Current test coverage. |
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Common failures and fixes. |
+| [`docs/RELEASE_PLAN.md`](docs/RELEASE_PLAN.md) | Release checklist and next-version scope. |
+| [`docs/RELEASE_NOTES_v0.1.0.md`](docs/RELEASE_NOTES_v0.1.0.md) | Published release notes. |
+| [`docs/RELEASE_NOTES_v0.2.0.md`](docs/RELEASE_NOTES_v0.2.0.md) | Draft notes for the next release. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contribution guidelines. |
 | [`SECURITY.md`](SECURITY.md) | Security policy. |
 
@@ -77,3 +80,18 @@ cc -Wall -Wextra -Werror -D BUFFER_SIZE=N
 
 This catches bugs that only appear with tiny buffers, larger buffers, or
 boundary-sized reads.
+
+## Release Status
+
+The current documented release is `v0.1.0`. Active development is tracked under
+`Unreleased` in [`CHANGELOG.md`](CHANGELOG.md), and the next release checklist is
+kept in [`docs/RELEASE_PLAN.md`](docs/RELEASE_PLAN.md).
+
+Before publishing a release, run:
+
+```sh
+make re
+./gnl_tester --root /path/to/Get_Next_Line --strict --no-color
+./gnl_tester --root /path/to/Get_Next_Line --bonus --strict --no-color
+./gnl_tester --root /path/to/Get_Next_Line --review --no-color
+```
