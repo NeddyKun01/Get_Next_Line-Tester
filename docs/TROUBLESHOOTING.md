@@ -96,6 +96,7 @@ Common causes:
 
 - using a single static pointer instead of fd-indexed storage;
 - freeing or overwriting the wrong fd stash;
+- allocating too few fd slots for several open files;
 - assuming reads always happen from one fd until EOF.
 
 ## Leak Check Notes

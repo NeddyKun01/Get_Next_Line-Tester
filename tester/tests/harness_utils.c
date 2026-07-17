@@ -49,6 +49,36 @@ char	*repeat_char(char value, size_t count)
 	return (text);
 }
 
+char	*format_text(const char *format, int value)
+{
+	int		len;
+	char	*text;
+
+	len = snprintf(NULL, 0, format, value);
+	if (len < 0)
+		exit(2);
+	text = malloc((size_t)len + 1);
+	if (!text)
+		exit(2);
+	snprintf(text, (size_t)len + 1, format, value);
+	return (text);
+}
+
+char	*format_text3(const char *format, int a, int b, int c)
+{
+	int		len;
+	char	*text;
+
+	len = snprintf(NULL, 0, format, a, b, c);
+	if (len < 0)
+		exit(2);
+	text = malloc((size_t)len + 1);
+	if (!text)
+		exit(2);
+	snprintf(text, (size_t)len + 1, format, a, b, c);
+	return (text);
+}
+
 char	*join2(const char *a, const char *b)
 {
 	size_t	a_len;

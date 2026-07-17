@@ -11,6 +11,7 @@ Initial public version of Get Next Line Tester.
 - Review mode for compact pre-submission summaries.
 - Timeout-protected test execution.
 - Pipe fd coverage in mandatory mode.
+- Round-robin bonus coverage across eight file descriptors.
 - Opt-in large-line stress fixtures with `--stress`.
 - Optional Valgrind leak checks through `--leaks`.
 - Valgrind failure classification for common memory errors and leaks.

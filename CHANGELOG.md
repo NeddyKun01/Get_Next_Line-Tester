@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Added `--stress` for opt-in 10k and 100k mandatory line fixtures.
 - Added Valgrind failure classification for leaks and common memory errors.
 - Added mandatory pipe fd coverage.
+- Added bonus round-robin coverage across eight file descriptors.
 
 ## 0.1.0 - 2026-07-15
 

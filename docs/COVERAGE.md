@@ -56,6 +56,7 @@ Covered cases:
 | two open fds | Independent stash/state per file descriptor. |
 | interleaved reads | Alternating calls between fds return the correct next line. |
 | blank line on one fd | Empty lines do not disturb another fd. |
+| many open fds | Round-robin reads across eight fds keep independent state. |
 | EOF on each fd | EOF is tracked independently. |
 
 ## Buffer Matrix
@@ -88,4 +89,3 @@ Planned future coverage:
 
 - 1MB line fixtures;
 - stdin redirection checks;
-- broader bonus stress tests with many fds;

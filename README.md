@@ -67,7 +67,7 @@ Example with an absolute target path:
 - repeated calls after EOF;
 - test runs that exceed the configured timeout;
 - review summaries for pre-submission checks;
-- bonus mode with two interleaved file descriptors.
+- bonus mode with interleaved and many file descriptor checks.
 
 The tester compiles the target project once per `BUFFER_SIZE` with:
 

@@ -5,6 +5,75 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+static void	check_many_fds(const char *dir)
+{
+	char	*path;
+	char	*name;
+	char	*content;
+	char	*label;
+	char	*expected;
+	int		fds[8];
+	int		i;
+
+	i = 0;
+	while (i < 8)
+	{
+		name = format_text("bonus_many_%d.txt", i);
+		path = join_path(dir, name);
+		content = format_text3("fd%d-a\nfd%d-b\nfd%d-last", i, i, i);
+		write_text(path, content);
+		fds[i] = open(path, O_RDONLY);
+		if (fds[i] < 0)
+		{
+			perror(path);
+			exit(2);
+		}
+		free(name);
+		free(path);
+		free(content);
+		i++;
+	}
+	i = 0;
+	while (i < 8)
+	{
+		label = format_text("many fd first %d", i);
+		expected = format_text("fd%d-a\n", i);
+		check_line(label, get_next_line(fds[i]), expected);
+		free(label);
+		free(expected);
+		i++;
+	}
+	i = 0;
+	while (i < 8)
+	{
+		label = format_text("many fd second %d", i);
+		expected = format_text("fd%d-b\n", i);
+		check_line(label, get_next_line(fds[i]), expected);
+		free(label);
+		free(expected);
+		i++;
+	}
+	i = 0;
+	while (i < 8)
+	{
+		label = format_text("many fd last %d", i);
+		expected = format_text("fd%d-last", i);
+		check_line(label, get_next_line(fds[i]), expected);
+		free(label);
+		free(expected);
+		i++;
+	}
+	i = 0;
+	while (i < 8)
+	{
+		label = format_text("many fd eof %d", i);
+		check_line(label, get_next_line(fds[i]), NULL);
+		free(label);
+		close(fds[i]);
+		i++;
+	}
+}
+
 int	main(int argc, char **argv)
 {
 	char	*a_path;
@@ -33,6 +102,7 @@ int	main(int argc, char **argv)
 	close(b);
 	free(a_path);
 	free(b_path);
+	check_many_fds(argv[1]);
 	if (g_failures == 0)
 		printf("OK bonus interleaved fds\n");
 	return (g_failures ? 1 : 0);
