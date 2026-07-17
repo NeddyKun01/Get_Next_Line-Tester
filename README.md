@@ -61,6 +61,7 @@ Example with an absolute target path:
 - multiple lines;
 - consecutive empty lines;
 - lines larger than `BUFFER_SIZE`;
+- pipe file descriptors;
 - opt-in 10k and 100k line stress fixtures;
 - buffer boundary cases;
 - repeated calls after EOF;

@@ -34,6 +34,25 @@ static void	check_file(const char *dir, const char *name,
 	free(path);
 }
 
+static void	check_pipe(void)
+{
+	int	fds[2];
+
+	if (pipe(fds) < 0)
+	{
+		perror("pipe");
+		exit(2);
+	}
+	write(fds[1], "pipe-a\npipe-b\nlast", 18);
+	close(fds[1]);
+	check_line("pipe[0]", get_next_line(fds[0]), "pipe-a\n");
+	check_line("pipe[1]", get_next_line(fds[0]), "pipe-b\n");
+	check_line("pipe[2]", get_next_line(fds[0]), "last");
+	check_line("pipe eof", get_next_line(fds[0]), NULL);
+	check_line("pipe eof repeat", get_next_line(fds[0]), NULL);
+	close(fds[0]);
+}
+
 #ifdef GNL_STRESS
 static void	check_stress_files(const char *dir)
 {
@@ -96,6 +115,7 @@ int	main(int argc, char **argv)
 		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
 		"tail",
 		long_expected);
+	check_pipe();
 #ifdef GNL_STRESS
 	check_stress_files(argv[1]);
 #endif

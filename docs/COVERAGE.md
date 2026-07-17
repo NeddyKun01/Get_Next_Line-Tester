@@ -25,6 +25,7 @@ Covered cases:
 | long line | Lines larger than common buffer sizes are joined correctly. |
 | exact-ish boundary fixture | Buffer edge behavior does not drop or duplicate bytes. |
 | calls after EOF | Repeated calls after EOF keep returning `NULL`. |
+| pipe fd | Lines can be read from a pipe file descriptor. |
 | timeout | Stuck test runs are killed after the configured timeout. |
 
 ## Stress Mode
@@ -86,5 +87,5 @@ Valgrind: SKIP not installed
 Planned future coverage:
 
 - 1MB line fixtures;
-- pipe or stdin based reads;
+- stdin redirection checks;
 - broader bonus stress tests with many fds;

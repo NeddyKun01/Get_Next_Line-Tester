@@ -55,6 +55,12 @@ Common causes:
 - bytes are duplicated or skipped across buffer boundaries;
 - empty lines are treated as EOF.
 
+## Pipe Failures
+
+The mandatory suite includes a pipe-backed fd case. If only the pipe case fails,
+look for code that assumes a regular file or depends on file-specific behavior
+instead of treating the fd as a normal `read` source.
+
 ## Timeout Failures
 
 If a run prints `timeout(3000ms)` or another configured value, the compiled test

@@ -78,6 +78,10 @@ cc -Wall -Wextra -Werror -D BUFFER_SIZE=N
 This catches bugs that only appear with tiny buffers, larger buffers, or exact
 boundary lengths.
 
+Mandatory mode also includes a pipe-backed file descriptor case. This checks
+that `get_next_line` works with valid non-regular-file descriptors, not only
+with files opened from disk.
+
 ## Timeout
 
 Each compiled test run is killed if it exceeds the configured timeout. The
