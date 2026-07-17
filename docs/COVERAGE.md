@@ -58,6 +58,11 @@ The tester can run every case across multiple `BUFFER_SIZE` values:
 | strict | `1,2,3,4,5,7,8,16,32,42,64,128,1024` |
 | custom | selected with `--buffer LIST` |
 
+## Review Mode
+
+Review mode runs the strict mandatory matrix and, when bonus files exist, the
+strict bonus matrix. It reports a compact suite score and a final verdict.
+
 ## Not Yet Covered
 
 Planned future coverage:

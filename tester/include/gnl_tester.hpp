@@ -13,6 +13,7 @@ struct Config
 	std::vector<int> buffers = {1, 2, 3, 5, 8, 16, 32, 42, 128, 1024};
 	int timeout_ms = 3000;
 	bool bonus = false;
+	bool review = false;
 	bool leaks = false;
 	bool color = true;
 	bool help = false;
@@ -28,6 +29,15 @@ struct RunResult
 	std::string compile_output;
 	std::string test_output;
 	std::string leak_output;
+};
+
+struct SuiteSummary
+{
+	std::string name;
+	bool skipped = false;
+	bool success = false;
+	int passed = 0;
+	int total = 0;
 };
 
 #endif

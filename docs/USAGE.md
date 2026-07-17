@@ -52,6 +52,7 @@ Then run the binary:
 ./gnl_tester --root ../Get_Next_Line --quick
 ./gnl_tester --root ../Get_Next_Line --strict
 ./gnl_tester --root ../Get_Next_Line --bonus --strict
+./gnl_tester --root ../Get_Next_Line --review
 ./gnl_tester --root ../Get_Next_Line --buffer 1,2,42,1024
 ./gnl_tester --root ../Get_Next_Line --strict --timeout 5000
 ./gnl_tester --root ../Get_Next_Line --strict --leaks --no-color
@@ -88,6 +89,24 @@ Use a larger timeout for slow machines or heavy Valgrind runs:
 ```
 
 Use `--timeout 0` to disable the timeout.
+
+## Review Mode
+
+Use `--review` for a compact pre-submission check:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --review
+```
+
+Review mode runs the strict mandatory matrix and automatically runs the strict
+bonus matrix when bonus files are present. It prints a compact summary and a
+final `PASS` or `FAIL` verdict.
+
+Use `--leaks` with review mode when you also want Valgrind checks:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --review --leaks
+```
 
 ## Bonus Mode
 

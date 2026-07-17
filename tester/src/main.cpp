@@ -134,6 +134,7 @@ static void print_help(void)
 		<< "Options:\n"
 		<< "  --root PATH       target project root (default: ..)\n"
 		<< "  --bonus          test get_next_line_bonus files\n"
+		<< "  --review         run mandatory strict and bonus strict when available\n"
 		<< "  --buffer LIST    comma-separated BUFFER_SIZE values\n"
 		<< "  --quick          use BUFFER_SIZE=1,42\n"
 		<< "  --strict         use a wider BUFFER_SIZE matrix\n"
@@ -156,6 +157,8 @@ static Config parse_args(int argc, char **argv)
 			cfg.root = arg.substr(7);
 		else if (arg == "--bonus")
 			cfg.bonus = true;
+		else if (arg == "--review")
+			cfg.review = true;
 		else if (arg == "--leaks")
 			cfg.leaks = true;
 		else if (arg == "--no-color")
@@ -208,6 +211,13 @@ static bool validate_root(const Config &cfg)
 		}
 	}
 	return (true);
+}
+
+static bool has_bonus_files(const fs::path &root)
+{
+	return (fs::exists(root / "get_next_line_bonus.c")
+		&& fs::exists(root / "get_next_line_utils_bonus.c")
+		&& fs::exists(root / "get_next_line_bonus.h"));
 }
 
 static fs::path harness_path(const fs::path &tester_dir, bool bonus)
@@ -317,6 +327,94 @@ static void print_result(const Config &cfg, const RunResult &res)
 		std::cout << res.leak_output;
 }
 
+static SuiteSummary run_suite(const Config &cfg, const fs::path &tester_dir,
+	const fs::path &build, bool bonus, bool verbose)
+{
+	Config suite_cfg = cfg;
+	fs::path harness;
+	fs::path harness_utils;
+	SuiteSummary summary;
+
+	suite_cfg.bonus = bonus;
+	summary.name = bonus ? "Bonus" : "Mandatory";
+	if (!validate_root(suite_cfg))
+		return (summary);
+	harness = harness_path(tester_dir, bonus);
+	harness_utils = harness_utils_path(tester_dir);
+	if (!fs::exists(harness))
+	{
+		std::cerr << "Missing " << harness << "\n";
+		return (summary);
+	}
+	if (!fs::exists(harness_utils))
+	{
+		std::cerr << "Missing " << harness_utils << "\n";
+		return (summary);
+	}
+	for (int buffer : suite_cfg.buffers)
+	{
+		RunResult res = run_one(suite_cfg, build, harness, harness_utils, buffer);
+		if (res.compile_ok && res.tests_ok && res.leaks_ok)
+			summary.passed++;
+		summary.total++;
+		if (verbose || !(res.compile_ok && res.tests_ok && res.leaks_ok))
+			print_result(suite_cfg, res);
+	}
+	summary.success = (summary.total > 0 && summary.passed == summary.total);
+	return (summary);
+}
+
+static void print_review_line(const Config &cfg, const SuiteSummary &summary)
+{
+	std::string label = summary.name + ":";
+	bool ok = summary.success && !summary.skipped;
+
+	std::cout << label;
+	if (label.size() < 11)
+		std::cout << std::string(11 - label.size(), ' ');
+	if (summary.skipped)
+	{
+		std::cout << "SKIP\n";
+		return ;
+	}
+	std::cout << (ok ? paint(cfg, "\033[32m") : paint(cfg, "\033[31m"))
+		<< (ok ? "OK " : "NOK") << paint(cfg, "\033[0m")
+		<< summary.passed << "/" << summary.total << "\n";
+}
+
+static int run_review(Config cfg, const fs::path &tester_dir)
+{
+	fs::path build = tester_dir / "tester" / "build" / "review";
+	SuiteSummary mandatory;
+	SuiteSummary bonus;
+	bool bonus_available;
+	bool pass;
+
+	cfg.buffers = {1, 2, 3, 4, 5, 7, 8, 16, 32, 42, 64, 128, 1024};
+	bonus_available = has_bonus_files(cfg.root);
+	fs::create_directories(build);
+	std::cout << "Get Next Line Tester Review\n\n";
+	std::cout << "target:  " << cfg.root << "\n";
+	std::cout << "timeout: " << cfg.timeout_ms << "ms\n";
+	std::cout << "leaks:   " << (cfg.leaks ? "enabled" : "skipped") << "\n\n";
+	mandatory = run_suite(cfg, tester_dir, build, false, false);
+	if (bonus_available)
+		bonus = run_suite(cfg, tester_dir, build, true, false);
+	else
+	{
+		bonus.name = "Bonus";
+		bonus.skipped = true;
+	}
+	std::cout << "\n";
+	print_review_line(cfg, mandatory);
+	print_review_line(cfg, bonus);
+	pass = mandatory.success && (bonus.skipped || bonus.success);
+	std::cout << "Verdict:  "
+		<< (pass ? paint(cfg, "\033[32m") : paint(cfg, "\033[31m"))
+		<< (pass ? "PASS" : "FAIL") << paint(cfg, "\033[0m") << "\n";
+	return (pass ? 0 : 1);
+}
+
 int main(int argc, char **argv)
 {
 	Config cfg = parse_args(argc, argv);
@@ -332,6 +430,8 @@ int main(int argc, char **argv)
 		return (0);
 	}
 	cfg.root = fs::weakly_canonical(cfg.root);
+	if (cfg.review)
+		return (run_review(cfg, tester_dir));
 	if (!validate_root(cfg))
 		return (2);
 	harness = harness_path(tester_dir, cfg.bonus);

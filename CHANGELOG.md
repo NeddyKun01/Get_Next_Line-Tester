@@ -9,8 +9,8 @@ All notable changes to this project will be documented in this file.
 - Added shared C harness utilities so mandatory and bonus tests do not duplicate
   fixture and assertion helpers.
 - Added `--timeout MS` to kill stuck test runs.
+- Added `--review` for compact mandatory and bonus pre-submission summaries.
 - Planned: larger stress fixtures for very long lines.
-- Planned: reviewer-oriented summary mode.
 - Planned: clearer Valgrind leak classification.
 
 ## 0.1.0 - 2026-07-15
