@@ -73,6 +73,14 @@ The tester can run every case across multiple `BUFFER_SIZE` values:
 Review mode runs the strict mandatory matrix and, when bonus files exist, the
 strict bonus matrix. It reports a compact suite score and a final verdict.
 
+When `--leaks` is enabled, review mode also reports a compact Valgrind line:
+
+```text
+Valgrind: OK
+Valgrind: NOK invalid read, definitely lost
+Valgrind: SKIP not installed
+```
+
 ## Not Yet Covered
 
 Planned future coverage:
@@ -80,4 +88,3 @@ Planned future coverage:
 - 1MB line fixtures;
 - pipe or stdin based reads;
 - broader bonus stress tests with many fds;
-- clearer categorization of Valgrind failures.

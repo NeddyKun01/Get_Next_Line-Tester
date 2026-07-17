@@ -26,10 +26,12 @@ struct RunResult
 	bool compile_ok = false;
 	bool tests_ok = false;
 	bool leaks_ok = true;
+	bool leak_skipped = false;
 	bool timed_out = false;
 	std::string compile_output;
 	std::string test_output;
 	std::string leak_output;
+	std::vector<std::string> leak_issues;
 };
 
 struct SuiteSummary
@@ -37,8 +39,11 @@ struct SuiteSummary
 	std::string name;
 	bool skipped = false;
 	bool success = false;
+	bool leak_checked = false;
+	bool leak_skipped = false;
 	int passed = 0;
 	int total = 0;
+	std::vector<std::string> leak_issues;
 };
 
 #endif

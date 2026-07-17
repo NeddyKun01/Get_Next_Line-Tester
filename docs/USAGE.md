@@ -155,4 +155,10 @@ Use `--leaks` to run each compiled suite under Valgrind when it is installed:
 ./gnl_tester --root ../Get_Next_Line --strict --leaks --no-color
 ```
 
+When Valgrind fails, the tester prints a short category before the full log:
+
+```text
+Valgrind: NOK invalid read, definitely lost
+```
+
 If Valgrind is missing, the tester skips leak checks and prints a note.

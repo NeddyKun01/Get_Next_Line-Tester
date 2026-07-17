@@ -100,6 +100,19 @@ functional checks and prints a skip note.
 If Valgrind reports reachable or lost memory, inspect the path that returns
 `NULL`, the path after EOF, and error paths after failed `read` or `malloc`.
 
+The tester classifies common Valgrind failures before printing the full log:
+
+| Category | Typical cause |
+| --- | --- |
+| `definitely lost` | Allocated memory is no longer reachable. |
+| `indirectly lost` | Memory reachable only from leaked memory was also lost. |
+| `possibly lost` | Pointer tracking became ambiguous. |
+| `still reachable` | Memory remains reachable at exit. |
+| `invalid read` | Reading freed or out-of-bounds memory. |
+| `invalid write` | Writing freed or out-of-bounds memory. |
+| `invalid free` | Freeing an invalid, duplicate, or mismatched pointer. |
+| `uninitialised value` | Branching or output depends on uninitialised data. |
+
 ## Paths With Spaces Or Accents
 
 The tester quotes paths passed to compile and run commands. If a path still

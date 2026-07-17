@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - Added `--timeout MS` to kill stuck test runs.
 - Added `--review` for compact mandatory and bonus pre-submission summaries.
 - Added `--stress` for opt-in 10k and 100k mandatory line fixtures.
-- Planned: clearer Valgrind leak classification.
+- Added Valgrind failure classification for leaks and common memory errors.
 
 ## 0.1.0 - 2026-07-15
 

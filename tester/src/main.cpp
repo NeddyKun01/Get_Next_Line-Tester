@@ -264,6 +264,67 @@ static bool command_exists(const std::string &name)
 	return (std::system(cmd.c_str()) == 0);
 }
 
+static void add_unique(std::vector<std::string> &values, const std::string &value)
+{
+	if (std::find(values.begin(), values.end(), value) == values.end())
+		values.push_back(value);
+}
+
+static bool has_nonzero_valgrind_count(const std::string &log,
+	const std::string &label)
+{
+	size_t	pos;
+	size_t	end;
+	std::string	line;
+
+	pos = log.find(label);
+	if (pos == std::string::npos)
+		return (false);
+	end = log.find('\n', pos);
+	line = log.substr(pos, end == std::string::npos ? std::string::npos : end - pos);
+	return (line.find(": 0 bytes") == std::string::npos
+		&& line.find(": 0 allocs") == std::string::npos);
+}
+
+static std::vector<std::string> classify_valgrind(const std::string &log)
+{
+	std::vector<std::string> issues;
+
+	if (log.find("Invalid read") != std::string::npos)
+		add_unique(issues, "invalid read");
+	if (log.find("Invalid write") != std::string::npos)
+		add_unique(issues, "invalid write");
+	if (log.find("Invalid free") != std::string::npos
+		|| log.find("Mismatched free") != std::string::npos)
+		add_unique(issues, "invalid free");
+	if (log.find("Use of uninitialised value") != std::string::npos
+		|| log.find("Conditional jump or move depends on uninitialised")
+			!= std::string::npos)
+		add_unique(issues, "uninitialised value");
+	if (has_nonzero_valgrind_count(log, "definitely lost:"))
+		add_unique(issues, "definitely lost");
+	if (has_nonzero_valgrind_count(log, "indirectly lost:"))
+		add_unique(issues, "indirectly lost");
+	if (has_nonzero_valgrind_count(log, "possibly lost:"))
+		add_unique(issues, "possibly lost");
+	if (has_nonzero_valgrind_count(log, "still reachable:"))
+		add_unique(issues, "still reachable");
+	return (issues);
+}
+
+static std::string join_issues(const std::vector<std::string> &issues)
+{
+	std::ostringstream out;
+
+	for (size_t i = 0; i < issues.size(); ++i)
+	{
+		if (i > 0)
+			out << ", ";
+		out << issues[i];
+	}
+	return (out.str());
+}
+
 static RunResult run_one(const Config &cfg, const fs::path &build,
 	const fs::path &harness, const fs::path &utils, int buffer)
 {
@@ -287,7 +348,9 @@ static RunResult run_one(const Config &cfg, const fs::path &build,
 		cfg.timeout_ms, res.timed_out);
 	res.test_output = read_file(test_log);
 	res.tests_ok = (code == 0 && !res.timed_out);
-	if (cfg.leaks && command_exists("valgrind"))
+	if (cfg.leaks && !command_exists("valgrind"))
+		res.leak_skipped = true;
+	if (cfg.leaks && !res.leak_skipped)
 	{
 		code = run_command_timeout({
 			"valgrind",
@@ -298,7 +361,11 @@ static RunResult run_one(const Config &cfg, const fs::path &build,
 			run_dir.string()
 		}, leak_log, cfg.timeout_ms, res.timed_out);
 		res.leak_output = read_file(leak_log);
-		res.leaks_ok = (code == 0 && !res.timed_out);
+		res.leak_issues = classify_valgrind(res.leak_output);
+		if (code != 0 && !res.timed_out && res.leak_issues.empty())
+			add_unique(res.leak_issues, "valgrind error");
+		res.leaks_ok = (code == 0 && !res.timed_out
+			&& res.leak_issues.empty());
 	}
 	return (res);
 }
@@ -329,7 +396,12 @@ static void print_result(const Config &cfg, const RunResult &res)
 	else if (!res.tests_ok)
 		std::cout << res.test_output;
 	else if (!res.leaks_ok)
+	{
+		if (!res.leak_issues.empty())
+			std::cout << "Valgrind: NOK " << join_issues(res.leak_issues)
+				<< "\n";
 		std::cout << res.leak_output;
+	}
 }
 
 static SuiteSummary run_suite(const Config &cfg, const fs::path &tester_dir,
@@ -362,6 +434,15 @@ static SuiteSummary run_suite(const Config &cfg, const fs::path &tester_dir,
 		if (res.compile_ok && res.tests_ok && res.leaks_ok)
 			summary.passed++;
 		summary.total++;
+		if (suite_cfg.leaks)
+		{
+			if (res.leak_skipped)
+				summary.leak_skipped = true;
+			else if (res.compile_ok && res.tests_ok)
+				summary.leak_checked = true;
+			for (const std::string &issue : res.leak_issues)
+				add_unique(summary.leak_issues, issue);
+		}
 		if (verbose || !(res.compile_ok && res.tests_ok && res.leaks_ok))
 			print_result(suite_cfg, res);
 	}
@@ -387,11 +468,46 @@ static void print_review_line(const Config &cfg, const SuiteSummary &summary)
 		<< summary.passed << "/" << summary.total << "\n";
 }
 
+static void merge_leak_summary(SuiteSummary &target, const SuiteSummary &source)
+{
+	if (source.leak_checked)
+		target.leak_checked = true;
+	if (source.leak_skipped)
+		target.leak_skipped = true;
+	for (const std::string &issue : source.leak_issues)
+		add_unique(target.leak_issues, issue);
+}
+
+static void print_valgrind_review_line(const Config &cfg,
+	const SuiteSummary &summary)
+{
+	bool ok = summary.leak_checked && summary.leak_issues.empty()
+		&& !summary.leak_skipped;
+
+	std::cout << "Valgrind: ";
+	if (!cfg.leaks)
+	{
+		std::cout << "SKIP\n";
+		return ;
+	}
+	if (summary.leak_skipped && !summary.leak_checked)
+	{
+		std::cout << "SKIP not installed\n";
+		return ;
+	}
+	std::cout << (ok ? paint(cfg, "\033[32m") : paint(cfg, "\033[31m"))
+		<< (ok ? "OK" : "NOK") << paint(cfg, "\033[0m");
+	if (!summary.leak_issues.empty())
+		std::cout << " " << join_issues(summary.leak_issues);
+	std::cout << "\n";
+}
+
 static int run_review(Config cfg, const fs::path &tester_dir)
 {
 	fs::path build = tester_dir / "tester" / "build" / "review";
 	SuiteSummary mandatory;
 	SuiteSummary bonus;
+	SuiteSummary leak_summary;
 	bool bonus_available;
 	bool pass;
 
@@ -414,6 +530,10 @@ static int run_review(Config cfg, const fs::path &tester_dir)
 	std::cout << "\n";
 	print_review_line(cfg, mandatory);
 	print_review_line(cfg, bonus);
+	merge_leak_summary(leak_summary, mandatory);
+	if (!bonus.skipped)
+		merge_leak_summary(leak_summary, bonus);
+	print_valgrind_review_line(cfg, leak_summary);
 	pass = mandatory.success && (bonus.skipped || bonus.success);
 	std::cout << "Verdict:  "
 		<< (pass ? paint(cfg, "\033[32m") : paint(cfg, "\033[31m"))
