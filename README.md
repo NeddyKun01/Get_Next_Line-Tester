@@ -3,7 +3,7 @@
 ![Language](https://img.shields.io/badge/language-C%2B%2B17-00599C)
 ![Project](https://img.shields.io/badge/project-get_next_line-111111)
 ![Mode](https://img.shields.io/badge/modes-mandatory%20%7C%20bonus-informational)
-![Release](https://img.shields.io/badge/release-v0.5.0-blue)
+![Release](https://img.shields.io/badge/release-v0.6.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Get Next Line Tester is a standalone, terminal-friendly tester for
@@ -32,6 +32,7 @@ standalone `./gnl_tester` binary.
 - `--fail-fast` to stop after the first failing buffer suite.
 - GitHub Actions for tester smoke checks and optional target-project CI.
 - Custom issue templates for bug reports, feature requests, and questions.
+- `--json` for machine-readable CI and script output.
 - Clearer first-run workflow for quick, strict, bonus, and review runs.
 - Result statuses, buffer profiles, advanced CLI examples, Makefile commands,
   leak checks, release status, documentation links, and contributing entry
@@ -256,6 +257,7 @@ Then run direct commands:
 ./gnl_tester --root ../Get_Next_Line --review --leaks
 ./gnl_tester --root ../Get_Next_Line --strict --summary-only --no-color
 ./gnl_tester --root ../Get_Next_Line --strict --fail-fast
+./gnl_tester --root ../Get_Next_Line --review --json
 ./gnl_tester --root ../Get_Next_Line --no-color
 ./gnl_tester --help
 ```
@@ -266,6 +268,9 @@ line handling.
 
 Use `--summary-only` for cleaner automation logs. Use `--fail-fast` when you
 want the first failing `BUFFER_SIZE` to stop the run immediately.
+
+Use `--json` when a script or CI job needs structured output. JSON mode disables
+color automatically and writes only JSON to stdout.
 
 ## Minimal Makefile Commands
 
@@ -296,7 +301,7 @@ invalid free, and uninitialised value reports.
 
 ## Release Status
 
-The current documented release is `v0.5.0`. Active development is tracked under
+The current documented release is `v0.6.0`. Active development is tracked under
 `Unreleased` in [`CHANGELOG.md`](CHANGELOG.md), and the next release checklist
 is kept in [`docs/RELEASE_PLAN.md`](docs/RELEASE_PLAN.md).
 
@@ -328,7 +333,8 @@ GNL_REPOSITORY=OWNER/Get_Next_Line
 
 The workflow builds the tester, runs a known-good smoke fixture, and can run
 mandatory strict, bonus strict, review, and Valgrind checks against the
-configured external Get Next Line repository.
+configured external Get Next Line repository. It also uploads
+`gnl-test-report.json` as a machine-readable artifact.
 
 ## Documentation
 
@@ -339,8 +345,9 @@ configured external Get Next Line repository.
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common setup and failure fixes. |
 | [Contributing tests](docs/CONTRIBUTING_TESTS.md) | How to add reliable tests. |
 | [Release plan](docs/RELEASE_PLAN.md) | Release checklist and next-version scope. |
-| [Release notes v0.5.0](docs/RELEASE_NOTES_v0.5.0.md) | Current release notes. |
-| [Release notes v0.4.0](docs/RELEASE_NOTES_v0.4.0.md) | Previous release notes. |
+| [Release notes v0.6.0](docs/RELEASE_NOTES_v0.6.0.md) | Current release notes. |
+| [Release notes v0.5.0](docs/RELEASE_NOTES_v0.5.0.md) | Previous release notes. |
+| [Release notes v0.4.0](docs/RELEASE_NOTES_v0.4.0.md) | Earlier release notes. |
 | [Release notes v0.3.0](docs/RELEASE_NOTES_v0.3.0.md) | Earlier release notes. |
 | [Release notes v0.2.0](docs/RELEASE_NOTES_v0.2.0.md) | Earlier release notes. |
 | [Changelog](CHANGELOG.md) | Project history and releases. |

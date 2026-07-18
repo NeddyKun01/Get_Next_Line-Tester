@@ -140,12 +140,30 @@ jobs:
         working-directory: Get_Next_Line/tester
         run: cat gnl-review.txt
 
+      - name: Generate JSON report
+        if: always()
+        working-directory: Get_Next_Line/tester
+        run: ./gnl_tester --root .. --review --json > gnl-test-report.json
+
+      - name: Show JSON report
+        if: always()
+        working-directory: Get_Next_Line/tester
+        run: cat gnl-test-report.json
+
       - name: Upload review summary
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: gnl-review
           path: Get_Next_Line/tester/gnl-review.txt
+          if-no-files-found: ignore
+
+      - name: Upload JSON report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gnl-json-report
+          path: Get_Next_Line/tester/gnl-test-report.json
           if-no-files-found: ignore
 
   leaks:

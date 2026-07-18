@@ -18,6 +18,7 @@ struct Config
 	bool leaks = false;
 	bool summary_only = false;
 	bool fail_fast = false;
+	bool json = false;
 	bool color = true;
 	bool help = false;
 };
@@ -46,6 +47,7 @@ struct SuiteSummary
 	int passed = 0;
 	int total = 0;
 	std::vector<std::string> leak_issues;
+	std::vector<RunResult> results;
 };
 
 #endif

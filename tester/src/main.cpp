@@ -142,6 +142,7 @@ static void print_help(void)
 		<< "  --leaks          run each suite with valgrind when available\n"
 		<< "  --summary-only   print only compact suite summaries\n"
 		<< "  --fail-fast      stop after the first failing buffer suite\n"
+		<< "  --json           print machine-readable JSON output\n"
 		<< "  --timeout MS     kill a test run after this many ms (default: 3000)\n"
 		<< "  --no-color       disable colors\n"
 		<< "  --help           show this help\n";
@@ -170,6 +171,8 @@ static Config parse_args(int argc, char **argv)
 			cfg.summary_only = true;
 		else if (arg == "--fail-fast")
 			cfg.fail_fast = true;
+		else if (arg == "--json")
+			cfg.json = true;
 		else if (arg == "--no-color")
 			cfg.color = false;
 		else if (arg == "--quick")
@@ -189,7 +192,70 @@ static Config parse_args(int argc, char **argv)
 	}
 	if (cfg.buffers.empty())
 		cfg.buffers = {42};
+	if (cfg.json)
+	{
+		cfg.color = false;
+		cfg.summary_only = true;
+	}
 	return (cfg);
+}
+
+static std::string json_escape(const std::string &value)
+{
+	std::ostringstream out;
+
+	for (unsigned char c : value)
+	{
+		if (c == '"')
+			out << "\\\"";
+		else if (c == '\\')
+			out << "\\\\";
+		else if (c == '\n')
+			out << "\\n";
+		else if (c == '\r')
+			out << "\\r";
+		else if (c == '\t')
+			out << "\\t";
+		else if (c < 32)
+		{
+			const char *hex = "0123456789abcdef";
+			out << "\\u00" << hex[c >> 4] << hex[c & 15];
+		}
+		else
+			out << c;
+	}
+	return (out.str());
+}
+
+static void print_json_string(std::ostream &out, const std::string &value)
+{
+	out << "\"" << json_escape(value) << "\"";
+}
+
+static void print_json_string_array(std::ostream &out,
+	const std::vector<std::string> &values)
+{
+	out << "[";
+	for (size_t i = 0; i < values.size(); ++i)
+	{
+		if (i > 0)
+			out << ",";
+		print_json_string(out, values[i]);
+	}
+	out << "]";
+}
+
+static void print_json_buffer_array(std::ostream &out,
+	const std::vector<int> &values)
+{
+	out << "[";
+	for (size_t i = 0; i < values.size(); ++i)
+	{
+		if (i > 0)
+			out << ",";
+		out << values[i];
+	}
+	out << "]";
 }
 
 static std::string read_file(const fs::path &path)
@@ -331,6 +397,70 @@ static std::string join_issues(const std::vector<std::string> &issues)
 	return (out.str());
 }
 
+static bool run_ok(const RunResult &res)
+{
+	return (res.compile_ok && res.tests_ok && res.leaks_ok);
+}
+
+static void print_run_result_json(std::ostream &out, const RunResult &res,
+	bool include_output)
+{
+	out << "{";
+	out << "\"buffer\":" << res.buffer;
+	out << ",\"ok\":" << (run_ok(res) ? "true" : "false");
+	out << ",\"compile_ok\":" << (res.compile_ok ? "true" : "false");
+	out << ",\"tests_ok\":" << (res.tests_ok ? "true" : "false");
+	out << ",\"leaks_ok\":" << (res.leaks_ok ? "true" : "false");
+	out << ",\"leak_skipped\":" << (res.leak_skipped ? "true" : "false");
+	out << ",\"timed_out\":" << (res.timed_out ? "true" : "false");
+	out << ",\"leak_issues\":";
+	print_json_string_array(out, res.leak_issues);
+	if (include_output && !run_ok(res))
+	{
+		out << ",\"compile_output\":";
+		print_json_string(out, res.compile_output);
+		out << ",\"test_output\":";
+		print_json_string(out, res.test_output);
+		out << ",\"leak_output\":";
+		print_json_string(out, res.leak_output);
+	}
+	out << "}";
+}
+
+static void print_results_json(std::ostream &out,
+	const std::vector<RunResult> &results, bool include_output)
+{
+	out << "[";
+	for (size_t i = 0; i < results.size(); ++i)
+	{
+		if (i > 0)
+			out << ",";
+		print_run_result_json(out, results[i], include_output);
+	}
+	out << "]";
+}
+
+static void print_suite_json(std::ostream &out, const SuiteSummary &summary,
+	bool include_output)
+{
+	out << "{";
+	out << "\"name\":";
+	print_json_string(out, summary.name);
+	out << ",\"skipped\":" << (summary.skipped ? "true" : "false");
+	out << ",\"success\":" << (summary.success ? "true" : "false");
+	out << ",\"passed\":" << summary.passed;
+	out << ",\"total\":" << summary.total;
+	out << ",\"leak_checked\":"
+		<< (summary.leak_checked ? "true" : "false");
+	out << ",\"leak_skipped\":"
+		<< (summary.leak_skipped ? "true" : "false");
+	out << ",\"leak_issues\":";
+	print_json_string_array(out, summary.leak_issues);
+	out << ",\"results\":";
+	print_results_json(out, summary.results, include_output);
+	out << "}";
+}
+
 static RunResult run_one(const Config &cfg, const fs::path &build,
 	const fs::path &harness, const fs::path &utils, int buffer)
 {
@@ -437,9 +567,10 @@ static SuiteSummary run_suite(const Config &cfg, const fs::path &tester_dir,
 	for (int buffer : suite_cfg.buffers)
 	{
 		RunResult res = run_one(suite_cfg, build, harness, harness_utils, buffer);
-		if (res.compile_ok && res.tests_ok && res.leaks_ok)
+		if (run_ok(res))
 			summary.passed++;
 		summary.total++;
+		summary.results.push_back(res);
 		if (suite_cfg.leaks)
 		{
 			if (res.leak_skipped)
@@ -449,11 +580,10 @@ static SuiteSummary run_suite(const Config &cfg, const fs::path &tester_dir,
 			for (const std::string &issue : res.leak_issues)
 				add_unique(summary.leak_issues, issue);
 		}
-		if (!suite_cfg.summary_only
-			&& (verbose || !(res.compile_ok && res.tests_ok && res.leaks_ok)))
+		if (!suite_cfg.summary_only && !suite_cfg.json
+			&& (verbose || !run_ok(res)))
 			print_result(suite_cfg, res);
-		if (suite_cfg.fail_fast
-			&& !(res.compile_ok && res.tests_ok && res.leaks_ok))
+		if (suite_cfg.fail_fast && !run_ok(res))
 			break ;
 	}
 	summary.success = (summary.total > 0 && summary.passed == summary.total);
@@ -524,11 +654,14 @@ static int run_review(Config cfg, const fs::path &tester_dir)
 	cfg.buffers = {1, 2, 3, 4, 5, 7, 8, 16, 32, 42, 64, 128, 1024};
 	bonus_available = has_bonus_files(cfg.root);
 	fs::create_directories(build);
-	std::cout << "Get Next Line Tester Review\n\n";
-	std::cout << "target:  " << cfg.root << "\n";
-	std::cout << "timeout: " << cfg.timeout_ms << "ms\n";
-	std::cout << "stress:  " << (cfg.stress ? "enabled" : "skipped") << "\n";
-	std::cout << "leaks:   " << (cfg.leaks ? "enabled" : "skipped") << "\n\n";
+	if (!cfg.json)
+	{
+		std::cout << "Get Next Line Tester Review\n\n";
+		std::cout << "target:  " << cfg.root << "\n";
+		std::cout << "timeout: " << cfg.timeout_ms << "ms\n";
+		std::cout << "stress:  " << (cfg.stress ? "enabled" : "skipped") << "\n";
+		std::cout << "leaks:   " << (cfg.leaks ? "enabled" : "skipped") << "\n\n";
+	}
 	mandatory = run_suite(cfg, tester_dir, build, false, false);
 	if (bonus_available)
 		bonus = run_suite(cfg, tester_dir, build, true, false);
@@ -537,17 +670,49 @@ static int run_review(Config cfg, const fs::path &tester_dir)
 		bonus.name = "Bonus";
 		bonus.skipped = true;
 	}
-	std::cout << "\n";
-	print_review_line(cfg, mandatory);
-	print_review_line(cfg, bonus);
 	merge_leak_summary(leak_summary, mandatory);
 	if (!bonus.skipped)
 		merge_leak_summary(leak_summary, bonus);
-	print_valgrind_review_line(cfg, leak_summary);
 	pass = mandatory.success && (bonus.skipped || bonus.success);
-	std::cout << "Verdict:  "
-		<< (pass ? paint(cfg, "\033[32m") : paint(cfg, "\033[31m"))
-		<< (pass ? "PASS" : "FAIL") << paint(cfg, "\033[0m") << "\n";
+	if (cfg.json)
+	{
+		std::cout << "{";
+		std::cout << "\"tester\":\"Get Next Line Tester\"";
+		std::cout << ",\"review\":true";
+		std::cout << ",\"target\":";
+		print_json_string(std::cout, cfg.root.string());
+		std::cout << ",\"timeout_ms\":" << cfg.timeout_ms;
+		std::cout << ",\"stress\":" << (cfg.stress ? "true" : "false");
+		std::cout << ",\"leaks\":" << (cfg.leaks ? "true" : "false");
+		std::cout << ",\"success\":" << (pass ? "true" : "false");
+		std::cout << ",\"verdict\":\"" << (pass ? "PASS" : "FAIL") << "\"";
+		std::cout << ",\"buffers\":";
+		print_json_buffer_array(std::cout, cfg.buffers);
+		std::cout << ",\"suites\":[";
+		print_suite_json(std::cout, mandatory, true);
+		std::cout << ",";
+		print_suite_json(std::cout, bonus, true);
+		std::cout << "]";
+		std::cout << ",\"valgrind\":{";
+		std::cout << "\"enabled\":" << (cfg.leaks ? "true" : "false");
+		std::cout << ",\"checked\":"
+			<< (leak_summary.leak_checked ? "true" : "false");
+		std::cout << ",\"skipped\":"
+			<< (leak_summary.leak_skipped ? "true" : "false");
+		std::cout << ",\"issues\":";
+		print_json_string_array(std::cout, leak_summary.leak_issues);
+		std::cout << "}}\n";
+	}
+	else
+	{
+		std::cout << "\n";
+		print_review_line(cfg, mandatory);
+		print_review_line(cfg, bonus);
+		print_valgrind_review_line(cfg, leak_summary);
+		std::cout << "Verdict:  "
+			<< (pass ? paint(cfg, "\033[32m") : paint(cfg, "\033[31m"))
+			<< (pass ? "PASS" : "FAIL") << paint(cfg, "\033[0m") << "\n";
+	}
 	return (pass ? 0 : 1);
 }
 
@@ -558,6 +723,7 @@ int main(int argc, char **argv)
 	fs::path build = tester_dir / "tester" / "build" / "runs";
 	fs::path harness;
 	fs::path harness_utils;
+	std::vector<RunResult> results;
 	int passed = 0;
 	int total = 0;
 
@@ -584,26 +750,61 @@ int main(int argc, char **argv)
 		return (2);
 	}
 	fs::create_directories(build);
-	std::cout << "Get Next Line Tester\n";
-	std::cout << "target: " << cfg.root << "\n";
-	std::cout << "mode:   " << (cfg.bonus ? "bonus" : "mandatory") << "\n\n";
+	if (!cfg.json)
+	{
+		std::cout << "Get Next Line Tester\n";
+		std::cout << "target: " << cfg.root << "\n";
+		std::cout << "mode:   " << (cfg.bonus ? "bonus" : "mandatory") << "\n\n";
+	}
 	for (int buffer : cfg.buffers)
 	{
 		RunResult res = run_one(cfg, build, harness, harness_utils, buffer);
-		if (res.compile_ok && res.tests_ok && res.leaks_ok)
+		if (run_ok(res))
 			passed++;
 		total++;
-		if (!cfg.summary_only || !(res.compile_ok && res.tests_ok && res.leaks_ok))
+		results.push_back(res);
+		if (!cfg.json && (!cfg.summary_only || !run_ok(res)))
 			print_result(cfg, res);
-		if (cfg.fail_fast && !(res.compile_ok && res.tests_ok && res.leaks_ok))
+		if (cfg.fail_fast && !run_ok(res))
 			break ;
 	}
-	std::cout << "\nSummary: " << passed << "/" << total
-		<< " buffer suites passed\n";
-	if (cfg.fail_fast && total < static_cast<int>(cfg.buffers.size()))
-		std::cout << "Stopped early after first failing buffer suite.\n";
-	if (cfg.leaks && !command_exists("valgrind"))
-		std::cout << "Note: valgrind not found, leak checks were skipped.\n";
+	if (cfg.json)
+	{
+		bool success = (passed == total
+			&& total == static_cast<int>(cfg.buffers.size()));
+
+		std::cout << "{";
+		std::cout << "\"tester\":\"Get Next Line Tester\"";
+		std::cout << ",\"review\":false";
+		std::cout << ",\"target\":";
+		print_json_string(std::cout, cfg.root.string());
+		std::cout << ",\"mode\":\"" << (cfg.bonus ? "bonus" : "mandatory")
+			<< "\"";
+		std::cout << ",\"timeout_ms\":" << cfg.timeout_ms;
+		std::cout << ",\"stress\":" << (cfg.stress ? "true" : "false");
+		std::cout << ",\"leaks\":" << (cfg.leaks ? "true" : "false");
+		std::cout << ",\"summary_only\":"
+			<< (cfg.summary_only ? "true" : "false");
+		std::cout << ",\"fail_fast\":" << (cfg.fail_fast ? "true" : "false");
+		std::cout << ",\"success\":" << (success ? "true" : "false");
+		std::cout << ",\"passed\":" << passed;
+		std::cout << ",\"total\":" << total;
+		std::cout << ",\"planned_total\":" << cfg.buffers.size();
+		std::cout << ",\"buffers\":";
+		print_json_buffer_array(std::cout, cfg.buffers);
+		std::cout << ",\"results\":";
+		print_results_json(std::cout, results, true);
+		std::cout << "}\n";
+	}
+	else
+	{
+		std::cout << "\nSummary: " << passed << "/" << total
+			<< " buffer suites passed\n";
+		if (cfg.fail_fast && total < static_cast<int>(cfg.buffers.size()))
+			std::cout << "Stopped early after first failing buffer suite.\n";
+		if (cfg.leaks && !command_exists("valgrind"))
+			std::cout << "Note: valgrind not found, leak checks were skipped.\n";
+	}
 	return (passed == total && total == static_cast<int>(cfg.buffers.size())
 		? 0 : 1);
 }

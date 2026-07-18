@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.6.0 - 2026-07-18
+
+- Added `--json` for machine-readable normal and review output.
+- Added JSON report generation and artifact upload to GitHub Actions.
+
 ## 0.5.0 - 2026-07-18
 
 - Added GitHub Actions for tester smoke checks and optional target-project CI.

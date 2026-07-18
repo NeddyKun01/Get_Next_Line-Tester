@@ -59,6 +59,7 @@ Then run the binary:
 ./gnl_tester --root ../Get_Next_Line --strict --leaks --no-color
 ./gnl_tester --root ../Get_Next_Line --strict --summary-only --no-color
 ./gnl_tester --root ../Get_Next_Line --strict --fail-fast
+./gnl_tester --root ../Get_Next_Line --review --json
 ./gnl_tester --help
 ```
 
@@ -117,6 +118,20 @@ Use `--fail-fast` to stop after the first failing buffer suite:
 
 This is useful when a tiny `BUFFER_SIZE` already exposes the bug and later
 buffers would only add noise.
+
+## JSON Output
+
+Use `--json` when CI, scripts, or bots need structured output:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --review --json
+./gnl_tester --root ../Get_Next_Line --strict --json
+```
+
+JSON mode disables color automatically and writes only JSON to stdout. It
+includes the target path, mode, selected buffers, pass/fail summary, per-buffer
+results, timeout state, and Valgrind issue categories when leak checks are
+enabled.
 
 ## Stress Mode
 
@@ -211,4 +226,5 @@ When a target repository is configured, the workflow runs:
 - mandatory strict mode with `--summary-only --fail-fast`;
 - bonus strict mode when bonus files are present;
 - review mode with an uploaded `gnl-review.txt` artifact;
+- JSON review mode with an uploaded `gnl-test-report.json` artifact;
 - a focused Valgrind leak job.

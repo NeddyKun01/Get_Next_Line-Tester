@@ -4,17 +4,17 @@ This document tracks what must be true before publishing the next version.
 
 ## Current Release
 
-Current: `v0.5.0`
+Current: `v0.6.0`
 
 Scope:
 
-- GitHub Actions for tester smoke checks and optional target-project CI;
-- custom issue templates for bug reports, feature requests, and questions;
-- documentation for CI configuration.
+- machine-readable normal and review output with `--json`;
+- JSON report artifact upload in GitHub Actions;
+- documentation for JSON output.
 
 ## Next Version
 
-Target: `v0.6.0`
+Target: `v0.7.0`
 
 Scope:
 
