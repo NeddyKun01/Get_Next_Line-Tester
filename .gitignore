@@ -1,2 +1,14 @@
 tester/build/
 gnl-test-report.txt
+gnl-test-report.json
+gnl-test-report.html
+gnl-doctor.json
+gnl-review.txt
+gnl-smoke-report.html
+gnl-doctor.html
+gnl-exported-fixtures/
+*.log
+*.tmp
+*.out
+*.dSYM/
+.gnl-tester.local.json

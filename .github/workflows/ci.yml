@@ -22,13 +22,21 @@ jobs:
 
     steps:
       - name: Checkout tester
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Build tester
         run: make build
 
+      - name: Run tester self-test
+        run: make self-test
+
       - name: Show help
         run: ./gnl_tester --help
+
+      - name: Show version and presets
+        run: |
+          ./gnl_tester --version
+          ./gnl_tester --presets
 
       - name: Create known-good target
         run: |
@@ -94,11 +102,23 @@ jobs:
           EOF
 
       - name: Run smoke suite
-        run: ./gnl_tester --root fixtures/Get_Next_Line --quick --summary-only --no-color
+        run: ./gnl_tester --root fixtures/Get_Next_Line --preset quick --summary-only --no-color
+
+      - name: Run smoke doctor
+        run: ./gnl_tester --root fixtures/Get_Next_Line --doctor
+
+      - name: Run smoke diagnostics
+        run: |
+          ./gnl_tester --root fixtures/Get_Next_Line --diagnose
+          ./gnl_tester --root fixtures/Get_Next_Line --health
+          ./gnl_tester --explain stdin
+
+      - name: Run focused smoke case
+        run: ./gnl_tester --root fixtures/Get_Next_Line --only stdin --quick --summary-only --no-color
 
       - name: Run smoke Web report
         run: |
-          ./gnl_tester --root fixtures/Get_Next_Line --quick --web > gnl-smoke-report.html
+          ./gnl_tester --root fixtures/Get_Next_Line --quick --web --output gnl-smoke-report.html
           grep -q "<!doctype html>" gnl-smoke-report.html
 
   build-and-test:
@@ -108,13 +128,13 @@ jobs:
 
     steps:
       - name: Checkout Get Next Line under test
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.TARGET_GNL_REPOSITORY }}
           path: Get_Next_Line
 
       - name: Checkout tester
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           path: Get_Next_Line/tester
 
@@ -125,6 +145,14 @@ jobs:
       - name: Run mandatory strict suite
         working-directory: Get_Next_Line/tester
         run: ./gnl_tester --root .. --strict --summary-only --fail-fast --no-color
+
+      - name: Run target diagnostics
+        working-directory: Get_Next_Line/tester
+        run: |
+          ./gnl_tester --root .. --diagnose
+          ./gnl_tester --root .. --health
+          ./gnl_tester --root .. --doctor --json --output gnl-doctor.json
+          ./gnl_tester --root .. --doctor --web --output gnl-doctor.html
 
       - name: Run bonus strict suite when available
         working-directory: Get_Next_Line/tester
@@ -148,7 +176,7 @@ jobs:
       - name: Generate JSON report
         if: always()
         working-directory: Get_Next_Line/tester
-        run: ./gnl_tester --root .. --review --json > gnl-test-report.json
+        run: ./gnl_tester --root .. --preset ci --output gnl-test-report.json
 
       - name: Show JSON report
         if: always()
@@ -158,11 +186,11 @@ jobs:
       - name: Generate Web report
         if: always()
         working-directory: Get_Next_Line/tester
-        run: ./gnl_tester --root .. --review --web > gnl-test-report.html
+        run: ./gnl_tester --root .. --preset web --output gnl-test-report.html
 
       - name: Upload review summary
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: gnl-review
           path: Get_Next_Line/tester/gnl-review.txt
@@ -170,18 +198,22 @@ jobs:
 
       - name: Upload JSON report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: gnl-json-report
-          path: Get_Next_Line/tester/gnl-test-report.json
+          path: |
+            Get_Next_Line/tester/gnl-test-report.json
+            Get_Next_Line/tester/gnl-doctor.json
           if-no-files-found: ignore
 
       - name: Upload Web report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: gnl-web-report
-          path: Get_Next_Line/tester/gnl-test-report.html
+          path: |
+            Get_Next_Line/tester/gnl-test-report.html
+            Get_Next_Line/tester/gnl-doctor.html
           if-no-files-found: ignore
 
   leaks:
@@ -192,13 +224,13 @@ jobs:
 
     steps:
       - name: Checkout Get Next Line under test
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.TARGET_GNL_REPOSITORY }}
           path: Get_Next_Line
 
       - name: Checkout tester
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           path: Get_Next_Line/tester
 

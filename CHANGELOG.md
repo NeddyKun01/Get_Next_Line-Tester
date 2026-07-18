@@ -2,7 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 1.0.0 - 2026-07-19
+
+- Prepared the `v1.0.0` development cycle.
+- Added `--doctor` for local tool and target project diagnostics.
+- Expanded doctor mode with header include-guard checks, `get_next_line`
+  prototype checks, and Makefile shape checks when a target Makefile exists.
+- Added `--diagnose` and `--health` for target-project diagnostics and compact
+  health summaries.
+- Added header compile probes and lightweight norm-style warnings to
+  diagnostics.
+- Added `--explain CASE`, `--only CASE`, and `--skip CASE` for focused
+  debugging.
+- Added `--cases` and validation for focused case names.
+- Added `--preset pedantic` for a heavier local matrix while keeping `school`
+  as a strict preset.
+- Added `--doctor --json` for structured diagnostics.
+- Added `--doctor --web` for standalone diagnostic HTML reports.
+- Added `--export-fixture CASE` for writing representative case fixtures.
+- Added `--rerun-failed FILE` for rerunning failed buffers from a JSON report.
+- Added `--compact` and `--profile` terminal output modes.
+- Added `--fd-limit N` for wide bonus fd checks.
+- Added optional `--norm` diagnostics.
+- Added `--malloc-fail` allocation-failure harness checks.
+- Added diagnostics, case filters, failed case labels, and likely-fix hints to
+  JSON reports.
+- Added a diagnostics section to Web reports.
+- Added newline-only, many-newline, double-buffer boundary, read-error repeat,
+  and wide bonus fd coverage.
+- Added likely-fix hints to failing rows in Web reports.
+- Added named presets with `--preset NAME` and preset listing with `--presets`.
+- Added `--output FILE` for JSON and Web reports.
+- Added `--version` with tester version metadata in JSON and Web reports.
+- Added `--list`, `--coverage`, and `--coverage-md` for inspecting tester
+  capabilities from the CLI.
+- Added `--compare PATH` for comparing two target roots with the same selected
+  options.
+- Added optional `.gnl-tester.json` defaults.
+- Added `--keep-build` while making per-run build directories clean up by
+  default.
+- Added per-process build directories so parallel tester runs do not overwrite
+  each other's logs or fixtures.
+- Added mandatory `STDIN_FILENO` coverage.
+- Added mandatory closed-fd and generated buffer-edge coverage.
+- Added internal known-good and known-broken target fixtures.
+- Added `make self-test` and `make clean-runs`.
+- Added Makefile targets for doctor mode, presets, review, JSON reports, and
+  Web reports.
+- Improved empty failure output messages for terminal, JSON, and Web reports.
+- Updated GitHub Actions to validate doctor mode, presets, and output-file
+  report generation.
+- Added a GitHub Actions guide with reusable target-repository examples.
 
 ## 0.7.0 - 2026-07-18
 

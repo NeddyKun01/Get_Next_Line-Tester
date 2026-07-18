@@ -7,6 +7,36 @@
 
 int	g_failures = 0;
 
+#ifdef GNL_MALLOC_FAIL
+static int	g_malloc_fail_enabled = 0;
+static int	g_malloc_fail_after = -1;
+
+void	*__real_malloc(size_t size);
+
+void	*__wrap_malloc(size_t size)
+{
+	if (g_malloc_fail_enabled)
+	{
+		if (g_malloc_fail_after <= 0)
+			return (NULL);
+		g_malloc_fail_after--;
+	}
+	return (__real_malloc(size));
+}
+
+void	harness_malloc_fail_after(int count)
+{
+	g_malloc_fail_enabled = 1;
+	g_malloc_fail_after = count;
+}
+
+void	harness_malloc_fail_disable(void)
+{
+	g_malloc_fail_enabled = 0;
+	g_malloc_fail_after = -1;
+}
+#endif
+
 void	write_text(const char *path, const char *text)
 {
 	int	fd;

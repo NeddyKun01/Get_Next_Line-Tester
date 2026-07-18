@@ -14,4 +14,9 @@ char	*join2(const char *a, const char *b);
 char	*join3(const char *a, const char *b, const char *c);
 void	check_line(const char *label, char *got, const char *expected);
 
+#ifdef GNL_MALLOC_FAIL
+void	harness_malloc_fail_after(int count);
+void	harness_malloc_fail_disable(void);
+#endif
+
 #endif
