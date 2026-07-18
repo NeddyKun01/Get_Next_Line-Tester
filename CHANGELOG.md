@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.3.0 - 2026-07-18
+
 - Reworked the README structure to match the full public documentation layout.
 
 ## 0.2.0 - 2026-07-17

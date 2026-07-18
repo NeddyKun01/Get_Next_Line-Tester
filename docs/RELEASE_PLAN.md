@@ -4,22 +4,19 @@ This document tracks what must be true before publishing the next version.
 
 ## Current Release
 
-Current: `v0.2.0`
+Current: `v0.3.0`
 
 Scope:
 
-- reorganized tester source layout;
-- shared mandatory and bonus harness utilities;
-- timeout-protected test execution;
-- review mode;
-- optional large-line stress fixtures;
-- Valgrind failure classification;
-- mandatory pipe fd coverage;
-- bonus round-robin coverage across eight file descriptors.
+- README structure aligned with the full public documentation layout;
+- clearer first-run guidance;
+- documented result statuses, buffer profiles, advanced CLI examples, Makefile
+  commands, leak checks, release status, documentation links, and contributing
+  entry points.
 
 ## Next Version
 
-Target: `v0.3.0`
+Target: `v0.4.0`
 
 Scope:
 

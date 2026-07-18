@@ -3,7 +3,7 @@
 ![Language](https://img.shields.io/badge/language-C%2B%2B17-00599C)
 ![Project](https://img.shields.io/badge/project-get_next_line-111111)
 ![Mode](https://img.shields.io/badge/modes-mandatory%20%7C%20bonus-informational)
-![Release](https://img.shields.io/badge/release-v0.2.0-blue)
+![Release](https://img.shields.io/badge/release-v0.3.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Get Next Line Tester is a standalone, terminal-friendly tester for
@@ -27,16 +27,12 @@ standalone `./gnl_tester` binary.
 
 ## What's New
 
-- Reorganized source layout with shared declarations in `tester/include/` and
-  harness code in `tester/tests/`.
-- Shared C harness utilities between mandatory and bonus tests.
-- `--review` mode for compact pre-submission summaries.
-- `--timeout MS` to stop stuck test runs.
-- `--stress` for opt-in 10k and 100k mandatory line fixtures.
-- Valgrind failure classification for common memory errors and leaks.
-- Mandatory pipe fd coverage.
-- Bonus round-robin coverage across eight file descriptors.
-- Release notes and release planning documents for versioned publishing.
+- README reworked into a fuller public project guide.
+- Clearer first-run workflow for quick, strict, bonus, and review runs.
+- Result statuses, buffer profiles, advanced CLI examples, Makefile commands,
+  leak checks, release status, documentation links, and contributing entry
+  points are now documented from the main page.
+- Release notes and release planning remain available for versioned publishing.
 
 ## What It Checks
 
@@ -291,7 +287,7 @@ invalid free, and uninitialised value reports.
 
 ## Release Status
 
-The current documented release is `v0.2.0`. Active development is tracked under
+The current documented release is `v0.3.0`. Active development is tracked under
 `Unreleased` in [`CHANGELOG.md`](CHANGELOG.md), and the next release checklist
 is kept in [`docs/RELEASE_PLAN.md`](docs/RELEASE_PLAN.md).
 
@@ -313,7 +309,8 @@ make re
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common setup and failure fixes. |
 | [Contributing tests](docs/CONTRIBUTING_TESTS.md) | How to add reliable tests. |
 | [Release plan](docs/RELEASE_PLAN.md) | Release checklist and next-version scope. |
-| [Release notes v0.2.0](docs/RELEASE_NOTES_v0.2.0.md) | Current release notes. |
+| [Release notes v0.3.0](docs/RELEASE_NOTES_v0.3.0.md) | Current release notes. |
+| [Release notes v0.2.0](docs/RELEASE_NOTES_v0.2.0.md) | Previous release notes. |
 | [Changelog](CHANGELOG.md) | Project history and releases. |
 | [Contributing guide](CONTRIBUTING.md) | How to contribute to the tester. |
 | [Security policy](SECURITY.md) | Supported security reporting process. |
