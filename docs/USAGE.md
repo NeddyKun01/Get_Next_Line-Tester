@@ -189,3 +189,26 @@ Valgrind: NOK invalid read, definitely lost
 ```
 
 If Valgrind is missing, the tester skips leak checks and prints a note.
+
+## GitHub Actions
+
+The repository includes a GitHub Actions workflow at
+`.github/workflows/ci.yml`.
+
+The workflow always builds the tester and runs a smoke suite against a
+known-good fixture. To run checks against an external Get Next Line repository,
+set this repository variable:
+
+```text
+GNL_REPOSITORY=owner/repository
+```
+
+You can also start the workflow manually and provide `gnl_repository` through
+`workflow_dispatch`.
+
+When a target repository is configured, the workflow runs:
+
+- mandatory strict mode with `--summary-only --fail-fast`;
+- bonus strict mode when bonus files are present;
+- review mode with an uploaded `gnl-review.txt` artifact;
+- a focused Valgrind leak job.

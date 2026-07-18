@@ -4,17 +4,17 @@ This document tracks what must be true before publishing the next version.
 
 ## Current Release
 
-Current: `v0.4.0`
+Current: `v0.5.0`
 
 Scope:
 
-- cleaner automation output with `--summary-only`;
-- faster debugging with `--fail-fast`;
-- documentation for both output-control options.
+- GitHub Actions for tester smoke checks and optional target-project CI;
+- custom issue templates for bug reports, feature requests, and questions;
+- documentation for CI configuration.
 
 ## Next Version
 
-Target: `v0.5.0`
+Target: `v0.6.0`
 
 Scope:
 

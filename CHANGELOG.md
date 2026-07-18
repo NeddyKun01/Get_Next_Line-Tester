@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.5.0 - 2026-07-18
+
+- Added GitHub Actions for tester smoke checks and optional target-project CI.
+- Added custom issue templates for bug reports, feature requests, and questions.
+
 ## 0.4.0 - 2026-07-18
 
 - Added `--summary-only` for cleaner automation output.
