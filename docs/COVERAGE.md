@@ -90,6 +90,8 @@ Valgrind: SKIP not installed
 | `--summary-only` | Hides passing buffer-suite lines in normal mode and keeps review output compact. |
 | `--fail-fast` | Stops the current suite after the first failing buffer suite. |
 | `--json` | Emits machine-readable suite, result, timeout, and leak metadata. |
+| `--web` | Emits a standalone HTML dashboard report. |
+| `--html` | Alias for `--web`. |
 
 ## JSON Output
 
@@ -102,6 +104,17 @@ JSON mode reports:
 - per-buffer compile, runtime, timeout, and leak status;
 - review-mode mandatory and bonus suite summaries;
 - Valgrind issue categories when leak checks are enabled.
+
+## Web Dashboard
+
+Web mode reports the same run result data in a standalone HTML file. It covers:
+
+- target path, mode, timeout, stress, leak, and fail-fast settings;
+- suite-level mandatory and bonus scores;
+- per-buffer compile, runtime, timeout, and leak status;
+- expandable failure output for failing rows;
+- all, passed, and failed row filters;
+- copyable rerun commands for failing buffer suites.
 
 ## Not Yet Covered
 

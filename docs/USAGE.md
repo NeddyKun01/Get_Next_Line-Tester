@@ -60,6 +60,7 @@ Then run the binary:
 ./gnl_tester --root ../Get_Next_Line --strict --summary-only --no-color
 ./gnl_tester --root ../Get_Next_Line --strict --fail-fast
 ./gnl_tester --root ../Get_Next_Line --review --json
+./gnl_tester --root ../Get_Next_Line --review --web > gnl-test-report.html
 ./gnl_tester --help
 ```
 
@@ -132,6 +133,25 @@ JSON mode disables color automatically and writes only JSON to stdout. It
 includes the target path, mode, selected buffers, pass/fail summary, per-buffer
 results, timeout state, and Valgrind issue categories when leak checks are
 enabled.
+
+## Web Dashboard
+
+Use `--web` or `--html` when you want a standalone dashboard report:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --review --web > gnl-test-report.html
+./gnl_tester --root ../Get_Next_Line --strict --html > gnl-test-report.html
+```
+
+Web mode disables color automatically and writes only HTML to stdout. The report
+is self-contained and includes:
+
+- target path and run configuration;
+- mandatory and bonus suite summaries;
+- per-buffer pass/fail results;
+- failure details for compile, test, timeout, and Valgrind errors;
+- filters for all, passed, and failed rows;
+- copyable rerun commands for failing buffer suites.
 
 ## Stress Mode
 
@@ -223,8 +243,10 @@ You can also start the workflow manually and provide `gnl_repository` through
 
 When a target repository is configured, the workflow runs:
 
+- tester smoke checks, including Web report generation against a known-good fixture;
 - mandatory strict mode with `--summary-only --fail-fast`;
 - bonus strict mode when bonus files are present;
 - review mode with an uploaded `gnl-review.txt` artifact;
 - JSON review mode with an uploaded `gnl-test-report.json` artifact;
+- Web review mode with an uploaded `gnl-test-report.html` artifact;
 - a focused Valgrind leak job.

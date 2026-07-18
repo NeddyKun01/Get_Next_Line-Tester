@@ -19,6 +19,7 @@ struct Config
 	bool summary_only = false;
 	bool fail_fast = false;
 	bool json = false;
+	bool web = false;
 	bool color = true;
 	bool help = false;
 };

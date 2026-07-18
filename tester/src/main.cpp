@@ -143,6 +143,7 @@ static void print_help(void)
 		<< "  --summary-only   print only compact suite summaries\n"
 		<< "  --fail-fast      stop after the first failing buffer suite\n"
 		<< "  --json           print machine-readable JSON output\n"
+		<< "  --web, --html    print a standalone Web dashboard report\n"
 		<< "  --timeout MS     kill a test run after this many ms (default: 3000)\n"
 		<< "  --no-color       disable colors\n"
 		<< "  --help           show this help\n";
@@ -173,6 +174,8 @@ static Config parse_args(int argc, char **argv)
 			cfg.fail_fast = true;
 		else if (arg == "--json")
 			cfg.json = true;
+		else if (arg == "--web" || arg == "--html")
+			cfg.web = true;
 		else if (arg == "--no-color")
 			cfg.color = false;
 		else if (arg == "--quick")
@@ -193,6 +196,11 @@ static Config parse_args(int argc, char **argv)
 	if (cfg.buffers.empty())
 		cfg.buffers = {42};
 	if (cfg.json)
+	{
+		cfg.color = false;
+		cfg.summary_only = true;
+	}
+	if (cfg.web)
 	{
 		cfg.color = false;
 		cfg.summary_only = true;
@@ -256,6 +264,28 @@ static void print_json_buffer_array(std::ostream &out,
 		out << values[i];
 	}
 	out << "]";
+}
+
+static std::string html_escape(const std::string &value)
+{
+	std::ostringstream out;
+
+	for (unsigned char c : value)
+	{
+		if (c == '&')
+			out << "&amp;";
+		else if (c == '<')
+			out << "&lt;";
+		else if (c == '>')
+			out << "&gt;";
+		else if (c == '"')
+			out << "&quot;";
+		else if (c == '\'')
+			out << "&#39;";
+		else
+			out << c;
+	}
+	return (out.str());
 }
 
 static std::string read_file(const fs::path &path)
@@ -461,6 +491,254 @@ static void print_suite_json(std::ostream &out, const SuiteSummary &summary,
 	out << "}";
 }
 
+static std::string result_label(const RunResult &res)
+{
+	if (run_ok(res))
+		return ("PASS");
+	if (!res.compile_ok)
+		return ("COMPILE");
+	if (res.timed_out)
+		return ("TIMEOUT");
+	if (!res.tests_ok)
+		return ("TEST");
+	if (!res.leaks_ok)
+		return ("LEAKS");
+	return ("FAIL");
+}
+
+static std::string first_failure_output(const RunResult &res)
+{
+	if (!res.compile_ok)
+		return (res.compile_output);
+	if (res.timed_out)
+		return ("Test run exceeded the configured timeout.");
+	if (!res.tests_ok)
+		return (res.test_output);
+	if (!res.leaks_ok)
+		return (res.leak_output);
+	return ("");
+}
+
+static int suite_failed(const SuiteSummary &summary)
+{
+	return (summary.total - summary.passed);
+}
+
+static int pass_percent(int passed, int total)
+{
+	if (total <= 0)
+		return (0);
+	return ((passed * 100) / total);
+}
+
+static void print_html_head(std::ostream &out)
+{
+	out << "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">";
+	out << "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">";
+	out << "<title>Get Next Line Tester Web Dashboard</title>";
+	out << "<style>";
+	out << ":root{--bg:#101315;--panel:#f7f2e8;--ink:#191d20;--muted:#687076;";
+	out << "--line:#d7d0c2;--dark:#20262a;--ok:#19764a;--bad:#b73a2f;";
+	out << "--warn:#a96f00;--accent:#1f6feb}";
+	out << "*{box-sizing:border-box}body{margin:0;background:#101315;color:var(--ink);";
+	out << "font:15px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,";
+	out << "\"Segoe UI\",sans-serif}main{max-width:1180px;margin:0 auto;padding:28px}";
+	out << ".hero{background:var(--panel);border:1px solid var(--line);border-radius:8px;";
+	out << "padding:28px;margin-bottom:18px}.top{display:flex;gap:18px;justify-content:";
+	out << "space-between;align-items:flex-start;flex-wrap:wrap}.eyebrow{margin:0 0 8px;";
+	out << "font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);";
+	out << "font-weight:800}h1{margin:0;font-size:42px;line-height:1.05;letter-spacing:0}";
+	out << "h2{margin:0 0 14px;font-size:22px}.verdict{display:inline-flex;align-items:";
+	out << "center;justify-content:center;min-width:120px;border-radius:8px;padding:12px 18px;";
+	out << "font-weight:900;color:white}.verdict.pass{background:var(--ok)}.verdict.fail{";
+	out << "background:var(--bad)}.muted{color:var(--muted)}.grid{display:grid;";
+	out << "grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px}";
+	out << ".metric,.panel{background:var(--panel);border:1px solid var(--line);";
+	out << "border-radius:8px;padding:18px}.metric span{display:block;color:var(--muted);";
+	out << "font-size:12px;text-transform:uppercase;font-weight:800}.metric strong{display:block;";
+	out << "font-size:30px;line-height:1.1;margin-top:6px}.bar{height:12px;border:1px solid ";
+	out << "var(--line);border-radius:999px;background:#ebe4d8;overflow:hidden}.bar span{";
+	out << "display:block;height:100%;background:linear-gradient(90deg,var(--ok),#5fa777)}";
+	out << ".panel{margin-top:14px}.toolbar{display:flex;gap:10px;align-items:center;";
+	out << "flex-wrap:wrap;margin:10px 0 16px}.filter,.copy{border:1px solid var(--line);";
+	out << "background:#fffaf0;border-radius:8px;padding:8px 10px;font:inherit;font-weight:800;";
+	out << "cursor:pointer}.filter.active{border-color:var(--accent);color:var(--accent)}";
+	out << ".table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:white}";
+	out << "table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:12px;";
+	out << "border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:";
+	out << "12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}tr:last-child td{";
+	out << "border-bottom:0}.pill{display:inline-block;border:1px solid currentColor;border-radius:";
+	out << "999px;padding:3px 8px;font-size:12px;font-weight:900}.pass-text{color:var(--ok)}";
+	out << ".fail-text{color:var(--bad)}.warn-text{color:var(--warn)}details{border:1px solid ";
+	out << "var(--line);border-radius:8px;background:white;margin-top:10px}summary{cursor:pointer;";
+	out << "padding:12px;font-weight:900}pre{white-space:pre-wrap;overflow:auto;margin:0;padding:14px;";
+	out << "background:#111820;color:#f2f5f7;border-top:1px solid #303a44;border-radius:0 0 8px 8px}";
+	out << ".hide{display:none}@media(max-width:800px){main{padding:16px}.grid{grid-template-columns:";
+	out << "repeat(2,minmax(0,1fr))}h1{font-size:32px}}";
+	out << "</style></head><body><main>";
+}
+
+static void print_html_script(std::ostream &out)
+{
+	out << "<script>";
+	out << "function filterRows(mode){document.querySelectorAll('[data-result]').forEach(function(r){";
+	out << "r.classList.toggle('hide',mode!=='all'&&r.dataset.result!==mode)});";
+	out << "document.querySelectorAll('.filter').forEach(function(b){b.classList.toggle('active',";
+	out << "b.dataset.mode===mode)})}";
+	out << "function copyText(id){navigator.clipboard&&navigator.clipboard.writeText(";
+	out << "document.getElementById(id).innerText)}";
+	out << "</script></main></body></html>\n";
+}
+
+static void print_html_metric(std::ostream &out, const std::string &label,
+	const std::string &value)
+{
+	out << "<div class=\"metric\"><span>" << html_escape(label)
+		<< "</span><strong>" << html_escape(value) << "</strong></div>";
+}
+
+static void print_html_result_row(std::ostream &out, const RunResult &res,
+	const std::string &suite_name)
+{
+	std::string label = result_label(res);
+	std::string result_class = run_ok(res) ? "passed" : "failed";
+
+	out << "<tr data-result=\"" << result_class << "\"><td>"
+		<< html_escape(suite_name) << "</td><td>BUFFER_SIZE=" << res.buffer
+		<< "</td><td><span class=\"pill "
+		<< (run_ok(res) ? "pass-text" : "fail-text") << "\">"
+		<< html_escape(label) << "</span></td><td>";
+	if (!run_ok(res))
+	{
+		out << "<details><summary>Failure output</summary><pre>";
+		out << html_escape(first_failure_output(res));
+		out << "</pre></details>";
+	}
+	else
+		out << "<span class=\"muted\">No issues</span>";
+	out << "</td></tr>";
+}
+
+static void print_html_suite_panel(std::ostream &out,
+	const SuiteSummary &summary)
+{
+	int percent = pass_percent(summary.passed, summary.total);
+
+	out << "<section class=\"panel\"><h2>" << html_escape(summary.name)
+		<< "</h2>";
+	if (summary.skipped)
+	{
+		out << "<p class=\"muted\">Suite skipped.</p></section>";
+		return ;
+	}
+	out << "<p><strong class=\"" << (summary.success ? "pass-text" : "fail-text")
+		<< "\">" << summary.passed << "/" << summary.total
+		<< "</strong> buffer suites passed.</p>";
+	out << "<div class=\"bar\"><span style=\"width:" << percent
+		<< "%\"></span></div>";
+	if (!summary.leak_issues.empty())
+	{
+		out << "<p class=\"fail-text\">Valgrind: "
+			<< html_escape(join_issues(summary.leak_issues)) << "</p>";
+	}
+	out << "</section>";
+}
+
+static std::string html_rerun_command(const Config &cfg,
+	const SuiteSummary &suite, const RunResult &res)
+{
+	std::ostringstream cmd;
+
+	cmd << "./gnl_tester --root " << quote(cfg.root.string());
+	if (suite.name == "Bonus")
+		cmd << " --bonus";
+	cmd << " --buffer " << res.buffer;
+	if (cfg.stress)
+		cmd << " --stress";
+	if (cfg.leaks)
+		cmd << " --leaks";
+	if (cfg.fail_fast)
+		cmd << " --fail-fast";
+	if (cfg.timeout_ms != 3000)
+		cmd << " --timeout " << cfg.timeout_ms;
+	cmd << " --no-color";
+	return (cmd.str());
+}
+
+static void print_html_report(std::ostream &out, const Config &cfg,
+	const std::vector<SuiteSummary> &suites, bool review, bool success)
+{
+	int total = 0;
+	int passed = 0;
+	int failed = 0;
+	int suite_count = 0;
+
+	for (const SuiteSummary &suite : suites)
+	{
+		if (suite.skipped)
+			continue ;
+		total += suite.total;
+		passed += suite.passed;
+		failed += suite_failed(suite);
+		suite_count++;
+	}
+	print_html_head(out);
+	out << "<section class=\"hero\"><div class=\"top\"><div>";
+	out << "<p class=\"eyebrow\">Get Next Line Tester</p>";
+	out << "<h1>Web Dashboard</h1>";
+	out << "<p class=\"muted\">Target: " << html_escape(cfg.root.string())
+		<< "</p>";
+	out << "</div><div class=\"verdict " << (success ? "pass" : "fail")
+		<< "\">" << (success ? "PASS" : "FAIL") << "</div></div>";
+	out << "<div class=\"grid\">";
+	print_html_metric(out, "Mode", review ? "review" : (cfg.bonus ? "bonus" : "mandatory"));
+	print_html_metric(out, "Passed", std::to_string(passed) + "/" + std::to_string(total));
+	print_html_metric(out, "Failed", std::to_string(failed));
+	print_html_metric(out, "Suites", std::to_string(suite_count));
+	out << "</div></section>";
+	out << "<section class=\"panel\"><h2>Run Configuration</h2><div class=\"grid\">";
+	print_html_metric(out, "Timeout", std::to_string(cfg.timeout_ms) + "ms");
+	print_html_metric(out, "Stress", cfg.stress ? "enabled" : "skipped");
+	print_html_metric(out, "Leaks", cfg.leaks ? "enabled" : "skipped");
+	print_html_metric(out, "Fail Fast", cfg.fail_fast ? "enabled" : "disabled");
+	out << "</div></section>";
+	for (const SuiteSummary &suite : suites)
+		print_html_suite_panel(out, suite);
+	out << "<section class=\"panel\"><h2>Buffer Results</h2>";
+	out << "<div class=\"toolbar\">";
+	out << "<button class=\"filter active\" data-mode=\"all\" onclick=\"filterRows('all')\">All</button>";
+	out << "<button class=\"filter\" data-mode=\"passed\" onclick=\"filterRows('passed')\">Passed</button>";
+	out << "<button class=\"filter\" data-mode=\"failed\" onclick=\"filterRows('failed')\">Failed</button>";
+	out << "</div><div class=\"table-wrap\"><table><thead><tr>";
+	out << "<th>Suite</th><th>Buffer</th><th>Status</th><th>Details</th>";
+	out << "</tr></thead><tbody>";
+	for (const SuiteSummary &suite : suites)
+	{
+		for (const RunResult &res : suite.results)
+			print_html_result_row(out, res, suite.name);
+	}
+	out << "</tbody></table></div></section>";
+	if (failed > 0)
+	{
+		out << "<section class=\"panel\"><h2>Rerun Commands</h2>";
+		out << "<button class=\"copy\" onclick=\"copyText('reruns')\">Copy commands</button>";
+		out << "<pre id=\"reruns\">";
+		for (const SuiteSummary &suite : suites)
+		{
+			for (const RunResult &res : suite.results)
+			{
+				if (!run_ok(res))
+				{
+					out << html_escape(html_rerun_command(cfg, suite, res))
+						<< "\n";
+				}
+			}
+		}
+		out << "</pre></section>";
+	}
+	print_html_script(out);
+}
+
 static RunResult run_one(const Config &cfg, const fs::path &build,
 	const fs::path &harness, const fs::path &utils, int buffer)
 {
@@ -654,7 +932,7 @@ static int run_review(Config cfg, const fs::path &tester_dir)
 	cfg.buffers = {1, 2, 3, 4, 5, 7, 8, 16, 32, 42, 64, 128, 1024};
 	bonus_available = has_bonus_files(cfg.root);
 	fs::create_directories(build);
-	if (!cfg.json)
+	if (!cfg.json && !cfg.web)
 	{
 		std::cout << "Get Next Line Tester Review\n\n";
 		std::cout << "target:  " << cfg.root << "\n";
@@ -703,6 +981,14 @@ static int run_review(Config cfg, const fs::path &tester_dir)
 		print_json_string_array(std::cout, leak_summary.leak_issues);
 		std::cout << "}}\n";
 	}
+	else if (cfg.web)
+	{
+		std::vector<SuiteSummary> suites;
+
+		suites.push_back(mandatory);
+		suites.push_back(bonus);
+		print_html_report(std::cout, cfg, suites, true, pass);
+	}
 	else
 	{
 		std::cout << "\n";
@@ -724,6 +1010,7 @@ int main(int argc, char **argv)
 	fs::path harness;
 	fs::path harness_utils;
 	std::vector<RunResult> results;
+	SuiteSummary summary;
 	int passed = 0;
 	int total = 0;
 
@@ -750,7 +1037,7 @@ int main(int argc, char **argv)
 		return (2);
 	}
 	fs::create_directories(build);
-	if (!cfg.json)
+	if (!cfg.json && !cfg.web)
 	{
 		std::cout << "Get Next Line Tester\n";
 		std::cout << "target: " << cfg.root << "\n";
@@ -763,16 +1050,19 @@ int main(int argc, char **argv)
 			passed++;
 		total++;
 		results.push_back(res);
-		if (!cfg.json && (!cfg.summary_only || !run_ok(res)))
+		if (!cfg.json && !cfg.web && (!cfg.summary_only || !run_ok(res)))
 			print_result(cfg, res);
 		if (cfg.fail_fast && !run_ok(res))
 			break ;
 	}
+	summary.name = cfg.bonus ? "Bonus" : "Mandatory";
+	summary.success = (passed == total
+		&& total == static_cast<int>(cfg.buffers.size()));
+	summary.passed = passed;
+	summary.total = total;
+	summary.results = results;
 	if (cfg.json)
 	{
-		bool success = (passed == total
-			&& total == static_cast<int>(cfg.buffers.size()));
-
 		std::cout << "{";
 		std::cout << "\"tester\":\"Get Next Line Tester\"";
 		std::cout << ",\"review\":false";
@@ -786,7 +1076,7 @@ int main(int argc, char **argv)
 		std::cout << ",\"summary_only\":"
 			<< (cfg.summary_only ? "true" : "false");
 		std::cout << ",\"fail_fast\":" << (cfg.fail_fast ? "true" : "false");
-		std::cout << ",\"success\":" << (success ? "true" : "false");
+		std::cout << ",\"success\":" << (summary.success ? "true" : "false");
 		std::cout << ",\"passed\":" << passed;
 		std::cout << ",\"total\":" << total;
 		std::cout << ",\"planned_total\":" << cfg.buffers.size();
@@ -795,6 +1085,10 @@ int main(int argc, char **argv)
 		std::cout << ",\"results\":";
 		print_results_json(std::cout, results, true);
 		std::cout << "}\n";
+	}
+	else if (cfg.web)
+	{
+		print_html_report(std::cout, cfg, {summary}, false, summary.success);
 	}
 	else
 	{

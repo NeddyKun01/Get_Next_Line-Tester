@@ -4,17 +4,17 @@ This document tracks what must be true before publishing the next version.
 
 ## Current Release
 
-Current: `v0.6.0`
+Current: `v0.7.0`
 
 Scope:
 
-- machine-readable normal and review output with `--json`;
-- JSON report artifact upload in GitHub Actions;
-- documentation for JSON output.
+- standalone Web dashboard output with `--web` and `--html`;
+- Web report artifact upload in GitHub Actions;
+- documentation for Web dashboard usage and coverage.
 
 ## Next Version
 
-Target: `v0.7.0`
+Target: `v0.8.0`
 
 Scope:
 

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.7.0 - 2026-07-18
+
+- Added `--web` and `--html` for standalone Web dashboard reports.
+- Added Web report generation and artifact upload to GitHub Actions.
+- Added documentation for Web dashboard usage, coverage, and release status.
+
 ## 0.6.0 - 2026-07-18
 
 - Added `--json` for machine-readable normal and review output.
