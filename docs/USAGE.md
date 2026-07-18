@@ -57,6 +57,8 @@ Then run the binary:
 ./gnl_tester --root ../Get_Next_Line --buffer 1,2,42,1024
 ./gnl_tester --root ../Get_Next_Line --strict --timeout 5000
 ./gnl_tester --root ../Get_Next_Line --strict --leaks --no-color
+./gnl_tester --root ../Get_Next_Line --strict --summary-only --no-color
+./gnl_tester --root ../Get_Next_Line --strict --fail-fast
 ./gnl_tester --help
 ```
 
@@ -94,6 +96,27 @@ Use a larger timeout for slow machines or heavy Valgrind runs:
 ```
 
 Use `--timeout 0` to disable the timeout.
+
+## Output Controls
+
+Use `--summary-only` for cleaner automation logs:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --strict --summary-only --no-color
+```
+
+In normal mode, passing buffer suites are hidden and failing buffer suites still
+print their useful diagnostics. In review mode, the output stays limited to the
+compact review summary.
+
+Use `--fail-fast` to stop after the first failing buffer suite:
+
+```sh
+./gnl_tester --root ../Get_Next_Line --strict --fail-fast
+```
+
+This is useful when a tiny `BUFFER_SIZE` already exposes the bug and later
+buffers would only add noise.
 
 ## Stress Mode
 

@@ -3,7 +3,7 @@
 ![Language](https://img.shields.io/badge/language-C%2B%2B17-00599C)
 ![Project](https://img.shields.io/badge/project-get_next_line-111111)
 ![Mode](https://img.shields.io/badge/modes-mandatory%20%7C%20bonus-informational)
-![Release](https://img.shields.io/badge/release-v0.3.0-blue)
+![Release](https://img.shields.io/badge/release-v0.4.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Get Next Line Tester is a standalone, terminal-friendly tester for
@@ -28,6 +28,8 @@ standalone `./gnl_tester` binary.
 ## What's New
 
 - README reworked into a fuller public project guide.
+- `--summary-only` for cleaner CI-style output.
+- `--fail-fast` to stop after the first failing buffer suite.
 - Clearer first-run workflow for quick, strict, bonus, and review runs.
 - Result statuses, buffer profiles, advanced CLI examples, Makefile commands,
   leak checks, release status, documentation links, and contributing entry
@@ -250,6 +252,8 @@ Then run direct commands:
 ./gnl_tester --root ../Get_Next_Line --leaks
 ./gnl_tester --root ../Get_Next_Line --review
 ./gnl_tester --root ../Get_Next_Line --review --leaks
+./gnl_tester --root ../Get_Next_Line --strict --summary-only --no-color
+./gnl_tester --root ../Get_Next_Line --strict --fail-fast
 ./gnl_tester --root ../Get_Next_Line --no-color
 ./gnl_tester --help
 ```
@@ -257,6 +261,9 @@ Then run direct commands:
 Use `--quick` while coding, `--strict` before sharing, `--review` when you want
 a compact pre-submission verdict, and `--stress` when you want to exercise large
 line handling.
+
+Use `--summary-only` for cleaner automation logs. Use `--fail-fast` when you
+want the first failing `BUFFER_SIZE` to stop the run immediately.
 
 ## Minimal Makefile Commands
 
@@ -287,7 +294,7 @@ invalid free, and uninitialised value reports.
 
 ## Release Status
 
-The current documented release is `v0.3.0`. Active development is tracked under
+The current documented release is `v0.4.0`. Active development is tracked under
 `Unreleased` in [`CHANGELOG.md`](CHANGELOG.md), and the next release checklist
 is kept in [`docs/RELEASE_PLAN.md`](docs/RELEASE_PLAN.md).
 
@@ -309,8 +316,9 @@ make re
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common setup and failure fixes. |
 | [Contributing tests](docs/CONTRIBUTING_TESTS.md) | How to add reliable tests. |
 | [Release plan](docs/RELEASE_PLAN.md) | Release checklist and next-version scope. |
-| [Release notes v0.3.0](docs/RELEASE_NOTES_v0.3.0.md) | Current release notes. |
-| [Release notes v0.2.0](docs/RELEASE_NOTES_v0.2.0.md) | Previous release notes. |
+| [Release notes v0.4.0](docs/RELEASE_NOTES_v0.4.0.md) | Current release notes. |
+| [Release notes v0.3.0](docs/RELEASE_NOTES_v0.3.0.md) | Previous release notes. |
+| [Release notes v0.2.0](docs/RELEASE_NOTES_v0.2.0.md) | Earlier release notes. |
 | [Changelog](CHANGELOG.md) | Project history and releases. |
 | [Contributing guide](CONTRIBUTING.md) | How to contribute to the tester. |
 | [Security policy](SECURITY.md) | Supported security reporting process. |

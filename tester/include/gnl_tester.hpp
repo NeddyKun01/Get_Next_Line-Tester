@@ -16,6 +16,8 @@ struct Config
 	bool review = false;
 	bool stress = false;
 	bool leaks = false;
+	bool summary_only = false;
+	bool fail_fast = false;
 	bool color = true;
 	bool help = false;
 };

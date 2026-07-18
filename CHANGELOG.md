@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.4.0 - 2026-07-18
+
+- Added `--summary-only` for cleaner automation output.
+- Added `--fail-fast` to stop after the first failing buffer suite.
+
 ## 0.3.0 - 2026-07-18
 
 - Reworked the README structure to match the full public documentation layout.

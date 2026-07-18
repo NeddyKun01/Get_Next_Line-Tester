@@ -140,6 +140,8 @@ static void print_help(void)
 		<< "  --quick          use BUFFER_SIZE=1,42\n"
 		<< "  --strict         use a wider BUFFER_SIZE matrix\n"
 		<< "  --leaks          run each suite with valgrind when available\n"
+		<< "  --summary-only   print only compact suite summaries\n"
+		<< "  --fail-fast      stop after the first failing buffer suite\n"
 		<< "  --timeout MS     kill a test run after this many ms (default: 3000)\n"
 		<< "  --no-color       disable colors\n"
 		<< "  --help           show this help\n";
@@ -164,6 +166,10 @@ static Config parse_args(int argc, char **argv)
 			cfg.stress = true;
 		else if (arg == "--leaks")
 			cfg.leaks = true;
+		else if (arg == "--summary-only")
+			cfg.summary_only = true;
+		else if (arg == "--fail-fast")
+			cfg.fail_fast = true;
 		else if (arg == "--no-color")
 			cfg.color = false;
 		else if (arg == "--quick")
@@ -443,8 +449,12 @@ static SuiteSummary run_suite(const Config &cfg, const fs::path &tester_dir,
 			for (const std::string &issue : res.leak_issues)
 				add_unique(summary.leak_issues, issue);
 		}
-		if (verbose || !(res.compile_ok && res.tests_ok && res.leaks_ok))
+		if (!suite_cfg.summary_only
+			&& (verbose || !(res.compile_ok && res.tests_ok && res.leaks_ok)))
 			print_result(suite_cfg, res);
+		if (suite_cfg.fail_fast
+			&& !(res.compile_ok && res.tests_ok && res.leaks_ok))
+			break ;
 	}
 	summary.success = (summary.total > 0 && summary.passed == summary.total);
 	return (summary);
@@ -549,6 +559,7 @@ int main(int argc, char **argv)
 	fs::path harness;
 	fs::path harness_utils;
 	int passed = 0;
+	int total = 0;
 
 	if (cfg.help)
 	{
@@ -581,11 +592,18 @@ int main(int argc, char **argv)
 		RunResult res = run_one(cfg, build, harness, harness_utils, buffer);
 		if (res.compile_ok && res.tests_ok && res.leaks_ok)
 			passed++;
-		print_result(cfg, res);
+		total++;
+		if (!cfg.summary_only || !(res.compile_ok && res.tests_ok && res.leaks_ok))
+			print_result(cfg, res);
+		if (cfg.fail_fast && !(res.compile_ok && res.tests_ok && res.leaks_ok))
+			break ;
 	}
-	std::cout << "\nSummary: " << passed << "/" << cfg.buffers.size()
+	std::cout << "\nSummary: " << passed << "/" << total
 		<< " buffer suites passed\n";
+	if (cfg.fail_fast && total < static_cast<int>(cfg.buffers.size()))
+		std::cout << "Stopped early after first failing buffer suite.\n";
 	if (cfg.leaks && !command_exists("valgrind"))
 		std::cout << "Note: valgrind not found, leak checks were skipped.\n";
-	return (passed == static_cast<int>(cfg.buffers.size()) ? 0 : 1);
+	return (passed == total && total == static_cast<int>(cfg.buffers.size())
+		? 0 : 1);
 }

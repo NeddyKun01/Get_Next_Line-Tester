@@ -4,19 +4,17 @@ This document tracks what must be true before publishing the next version.
 
 ## Current Release
 
-Current: `v0.3.0`
+Current: `v0.4.0`
 
 Scope:
 
-- README structure aligned with the full public documentation layout;
-- clearer first-run guidance;
-- documented result statuses, buffer profiles, advanced CLI examples, Makefile
-  commands, leak checks, release status, documentation links, and contributing
-  entry points.
+- cleaner automation output with `--summary-only`;
+- faster debugging with `--fail-fast`;
+- documentation for both output-control options.
 
 ## Next Version
 
-Target: `v0.4.0`
+Target: `v0.5.0`
 
 Scope:
 

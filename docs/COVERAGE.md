@@ -83,6 +83,13 @@ Valgrind: NOK invalid read, definitely lost
 Valgrind: SKIP not installed
 ```
 
+## Output Controls
+
+| Option | What it changes |
+| --- | --- |
+| `--summary-only` | Hides passing buffer-suite lines in normal mode and keeps review output compact. |
+| `--fail-fast` | Stops the current suite after the first failing buffer suite. |
+
 ## Not Yet Covered
 
 Planned future coverage:
